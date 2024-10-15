@@ -306,6 +306,7 @@ def send_js(filename):
 def add_image_processing_task(data):
     data['notify_type'] = 'ws'
     logger.info(f'get req is {data}')
+    data['def_skin'] = 'inpaint'
     roomId = data['roomId']
     room_image_manager = RoomImageManager()
     user_info = query_or_def(User(roomId, roomId))

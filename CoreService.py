@@ -1263,8 +1263,9 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                    {'img_type': 'media_group', 'text':'逐个选择配对，先选A在选B则为将A替换为B，你可以先后选择多组'}, to=room_id,
                    keyList=reply_markup_face, media_group=media_group)
         return
-    # 重绘任务
-    handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_callback)
+    if def_skin == 'inpaint':
+        # 重绘任务
+        handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_callback)
     return
 
 

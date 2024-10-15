@@ -292,6 +292,7 @@ async def handle_photo(update: Update, context) -> None:
         data['notify_type'] = 'tel'
         data['filename'] = filename
         data['roomId'] = room_id
+        data['def_skin'] = 'inpaint'
         logger.info(f'get req is {data}')
         room_image_manager = RoomImageManager()
         add_task_list(data, 'tel_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)

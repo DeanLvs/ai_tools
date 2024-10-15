@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>BOOK YES</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1c1c1c;
+            color: #f1f1f1;
+            }
+            header {
+                width: 100%;
+                padding: 20px;
+                background-color: #333;
+                color: #f1f1f1;
+                text-align: center;
+                font-size: 28px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+                border-bottom: 1px solid #444;
+            }
+            main {
+                display: flex;
+                flex-direction: column;
+                background-color: #2c2c2c;
+                padding: 20px;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+                border-radius: 10px;
+                width: 90%;
+                max-width: 1200px;
+                margin: 20px auto;
+            }
+            .left-panel, .right-panel {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 20px;
+            }
+            .left-panel {
+                flex: 1;
+                margin-right: 20px;
+            }
+            .right-panel {
+                flex: 3;
+            }
+            .left-panel img, .left-panel #maskImage, .left-panel #processedImage {
+                width: 100%;
+                height: 200px;
+                object-fit: contain;
+                margin-bottom: 20px;
+                border: 1px solid #555;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            .right-panel button,
+            .right-panel input[type="range"],
+            .right-panel input[type="file"],
+            .right-panel input[type="text"] {
+                width: 90%;
+                padding: 20px;
+                margin-bottom: 20px;
+                font-size: 18px;
+                cursor: pointer;
+                background-color: #444;
+                color: #f1f1f1;
+                border: 1px solid #555;
+                border-radius: 4px;
+            }
+            .right-panel button {
+                background-color: #555;
+            }
+            .right-panel button:hover {
+                background-color: #666;
+            }
+            .right-panel input[type="file"] {
+                border: 1px solid #555;
+                background-color: #333;
+                height: 20%;
+            }
+            .right-panel input[type="text"] {
+                border: 1px solid #555;
+                background-color: #2c2c2c;
+            }
+            .progress-container {
+                width: 100%;
+                height: 40px;
+                background-color: #444;
+                border-radius: 4px;
+                margin-top: 10px;
+                position: relative;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .progress-bar {
+                width: 0;
+                height: 100%;
+                background-color: #4CAF50;
+                border-radius: 4px;
+                transition: width 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+            }
+            h2 {
+                color: #f1f1f1;
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            label {
+                color: #f1f1f1;
+                font-size: 18px;
+                margin-bottom: 10px;
+            }
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                font-size: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                display: none;
+            }
+            .canvas-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1100;
+                display: none;
+                flex-direction: column;
+            }
+            .canvas-container {
+                position: relative;
+                background-color: #1c1c1c;
+                padding: 20px;
+                border-radius: 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .canvas-container canvas {
+                max-width: 90vw;
+                max-height: 90vh;
+            }
+            .close-button {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: #444;
+                color: #f1f1f1;
+                border: none;
+                padding: 10px 20px;
+                cursor: pointer;
+                border-radius: 4px;
+            }
+            .toolbar {
+                display: flex;
+                flex-direction: row;
+                gap: 20px;
+                margin-top: 20px;
+                justify-content: center;
+            }
+            .toolbar button,
+            .toolbar input[type="range"] {
+                background-color: #444;
+                color: #f1f1f1;
+                border: 1px solid #555;
+                border-radius: 4px;
+                padding: 10px;
+                cursor: pointer;
+            }
+            .toolbar button.erase {
+                background-color: #fff;
+                color: #000;
+            }
+            .toolbar button.erase.active {
+                background-color: #000;
+                color: #fff;
+            }
+            .fullscreen-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1200;
+                display: none;
+            }
+            .fullscreen-overlay img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+            .fullscreen-close-button {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: #444;
+                color: #f1f1f1;
+                border: none;
+                padding: 10px 20px;
+                cursor: pointer;
+                border-radius: 4px;
+                font-size: 20px;
+            }
+            @media (min-width: 768px) {
+                main {
+                    flex-direction: row;
+                }
+                .left-panel {
+                    flex: 1;
+                    margin-right: 20px;
+                }
+                .right-panel {
+                    flex: 3;
+                    align-items: flex-start;
+                }
+            }
+    </style>
+    <script>
+        let isDrawing = false;
+        let isErasing = false;
+        let brushSize = 20; // Default brush size set to maximum
+        let ctx, canvasRect, canvas;
+
+        function showOverlay() {
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        function hideOverlay() {
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function uploadImage() {
+            showOverlay();
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const uploadedImage = document.getElementById('uploadedImage');
+                uploadedImage.src = data.file_url;
+                uploadedImage.style.display = 'block';
+
+                canvas = document.getElementById('canvas');
+                ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.src = data.file_url;
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    hideOverlay();
+                };
+                document.getElementById('filename').value = data.filename;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                hideOverlay();
+            });
+        }
+
+        function startDrawing(event) {
+            isDrawing = true;
+            const pos = getMousePos(event);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function draw(event) {
+            if (!isDrawing) return;
+            const pos = getMousePos(event);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.lineWidth = brushSize;
+            ctx.strokeStyle = isErasing ? '#1c1c1c' : '#00FF00';  // Use green for drawing, background color for erasing
+            ctx.stroke();
+                }
+
+        function getMousePos(event) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (event.clientX - rect.left) * scaleX,
+                y: (event.clientY - rect.top) * scaleY
+            };
+        }
+
+        function setBrushSize() {
+            brushSize = document.getElementById('brushSize').value;
+        }
+
+        function toggleErase() {
+            isErasing = !isErasing;
+            const eraseButton = document.getElementById('eraseButton');
+            eraseButton.classList.toggle('active', isErasing);
+        }
+
+        function generateMask() {
+            showOverlay();
+            const filename = document.getElementById('filename').value;
+            const maskData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            const maskPoints = [];
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const index = (y * canvas.width + x) * 4;
+                    if (maskData[index + 1] === 255 && maskData[index] === 0 && maskData[index + 2] === 0) {  // Check green channel
+                        maskPoints.push(x, y);
+                    }
+                }
+            }
+            fetch('/generate_mask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename, points: maskPoints }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('maskImage').src = data.mask_url;
+                document.getElementById('maskImage').style.display = 'block';
+                hideOverlay();
+                processImage();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                hideOverlay();
+            });
+        }
+
+        function uuidv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function processImage() {
+            showOverlay();
+            const filename = document.getElementById('filename').value;
+
+            const prompt = document.getElementById('prompt').value;
+            const reverse_prompt = document.getElementById('reverse_prompt').value;
+            const num_inference_steps = document.getElementById('num_inference_steps').value;
+            const guidance_scale = document.getElementById('guidance_scale').value;
+            const seed = document.getElementById('seed').value;
+            const room_id = uuidv4();
+            const socket = io();
+            socket.emit('join_room', { roomId: room_id });
+            socket.emit('process_image', { filename, prompt, reverse_prompt, num_inference_steps, guidance_scale, seed });
+            socket.on('processing_progress', (data) => {
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.style.width = `${data.progress}%`;
+                progressBar.innerText = `${data.progress}%`;
+            });
+            socket.on('processing_done_key', (data) => {
+                document.getElementById('handler-key').innerText = '记住这个key，等不及可以20分钟后会在用key查看: ' + data.processing_done_key;
+                hideOverlay();
+            });
+            socket.on('processing_done', (data) => {
+                document.getElementById('progress').innerText = '处理完成！';
+                const img = document.getElementById('processedImage');
+                img.src = data.processed_image_url;
+                img.style.display = 'block';
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.style.width = '0%';
+                progressBar.innerText = '';
+                hideOverlay();
+            });
+        }
+
+        function autoRecognize() {
+            showOverlay();
+            const filename = document.getElementById('filename').value;
+            fetch('/auto_recognize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const maskPixels = data.mask_pixels;
+                ctx.fillStyle = '#00FF00';  // Use green to fill the mask
+                maskPixels.forEach(([x, y]) => {
+                    ctx.fillRect(x, y, 1, 1);  // Draw each mask pixel
+                });
+                hideOverlay();
+<!--                showCanvasOverlay();  // Show the canvas overlay after image upload-->
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                hideOverlay();
+            });
+        }
+
+        async function exampleFunction() {
+            console.log('开始');
+            await sleep(2000);  // 暂停2秒
+            console.log('2秒后');
+        }
+
+        function totalRun(){
+            uploadImage();
+            autoRecognize();
+            exampleFunction();
+            closeCanvasOverlay();
+            generateMask();
+        }
+
+        function viewImage() {
+            const filename = document.getElementById('viewFilename').value;
+            const imageUrl = `/uploads/${filename}`;
+            const viewImageElement = document.getElementById('viewImage');
+            viewImageElement.src = imageUrl;
+            viewImageElement.style.display = 'block';
+        }
+
+        function showCanvasOverlay() {
+            const canvasOverlay = document.querySelector('.canvas-overlay');
+            canvasOverlay.style.display = 'flex';
+            canvasRect = canvas.getBoundingClientRect(); // Recalculate the canvas rect in the overlay
+        }
+
+        function closeCanvasOverlay() {
+            const canvasOverlay = document.querySelector('.canvas-overlay');
+            canvasOverlay.style.display = 'none';
+        }
+
+        function showFullscreenImage() {
+            const fullscreenOverlay = document.querySelector('.fullscreen-overlay');
+            const fullscreenImage = document.getElementById('fullscreenImage');
+            fullscreenImage.src = document.getElementById('processedImage').src;
+            fullscreenOverlay.style.display = 'flex';
+        }
+
+        function closeFullscreenImage() {
+            const fullscreenOverlay = document.querySelector('.fullscreen-overlay');
+            fullscreenOverlay.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const modalCanvas = document.getElementById('canvas');
+            modalCanvas.addEventListener('mousedown', startDrawing);
+            modalCanvas.addEventListener('mousemove', draw);
+            modalCanvas.addEventListener('mouseup', stopDrawing);
+            modalCanvas.addEventListener('mouseleave', stopDrawing);
+        });
+    </script>
+</head>
+<body>
+<header>BOOK YES</header>
+<main>
+<div class="left-panel">
+    <div class="section">
+        <img id="uploadedImage" alt="已上传的图片" onclick="showCanvasOverlay()">
+        <img id="maskImage" alt="掩码图片">
+        <div style="position: relative;">
+            <img id="processedImage" alt="处理后的图片" onclick="showFullscreenImage()">
+            <button class="close-button" style="position: absolute; bottom: 10px; right: 10px;" onclick="showFullscreenImage()">全屏查看</button>
+        </div>
+    </div>
+    <p id="progress" class="progress"></p>
+</div>
+<div class="right-panel">
+    <div class="section">
+        <h2>操作</h2>
+        <input type="file" id="fileInput">
+        <button onclick="uploadImage()">上传</button>
+        <button onclick="autoRecognize()">自动识别</button>
+        <input type="hidden" id="prompt" placeholder="正向">
+        <input type="hidden" id="reverse_prompt" placeholder="负向">
+        <input type="hidden" id="num_inference_steps" placeholder="处理精细度50-100">
+        <input type="hidden" id="guidance_scale" placeholder="1-10自由">
+        <input type="hidden" id="seed" placeholder="0-100随机">
+        <button onclick="generateMask()">处理图像</button>
+<!--        <button onclick="totalRun()">一件执行</button>-->
+        <div class="progress-container">
+            <div class="progress-bar">0%</div>
+        </div>
+        <p id="handler-key"></p>
+        <input type="hidden" id="filename">
+    </div>
+    <div class="section">
+        <h2>查看图片</h2>
+        <input type="text" id="viewFilename" placeholder="输入图片名">
+        <button onclick="viewImage()">查看</button>
+        <img id="viewImage" alt="查看图片" style="display:none;">
+    </div>
+</div>
+</main>
+<div id="overlay" class="overlay">处理中...</div>
+<div class="canvas-overlay">
+    <div class="canvas-container">
+        <button class="close-button" onclick="closeCanvasOverlay()">关闭</button>
+        <canvas id="canvas"></canvas>
+        <div class="toolbar">
+            <label for="brushSize">画笔大小:</label>
+            <input type="range" id="brushSize" name="brushSize" min="1" max="20" value="20" onchange="setBrushSize()">
+            <button id="eraseButton" class="erase" onclick="toggleErase()">切换擦除模式</button>
+        </div>
+    </div>
+</div>
+<div class="fullscreen-overlay" onclick="closeFullscreenImage()">
+    <img id="fullscreenImage" alt="全屏图片">
+    <button class="fullscreen-close-button" onclick="closeFullscreenImage()">关闭</button>
+</div>
+</body>
+</html>

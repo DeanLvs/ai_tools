@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>BOOK YES[仅供学术研究使用]</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="js/g_core.js"></script>
+    <style> .btcpay-form { display: inline-flex; align-items: center; justify-content: center; } .btcpay-form--inline { flex-direction: row; } .btcpay-form--block { flex-direction: column; } .btcpay-form--inline .submit { margin-left: 15px; } .btcpay-form--block select { margin-bottom: 10px; } .btcpay-form .btcpay-custom-container{ text-align: center; }.btcpay-custom { display: flex; align-items: center; justify-content: center; } .btcpay-form .plus-minus { cursor:pointer; font-size:25px; line-height: 25px; background: #DFE0E1; height: 30px; width: 45px; border:none; border-radius: 60px; margin: auto 5px; display: inline-flex; justify-content: center; } .btcpay-form select { -moz-appearance: none; -webkit-appearance: none; appearance: none; color: currentColor; background: transparent; border:1px solid transparent; display: block; padding: 1px; margin-left: auto; margin-right: auto; font-size: 11px; cursor: pointer; } .btcpay-form select:hover { border-color: #ccc; } .btcpay-form option { color: #000; background: rgba(0,0,0,.1); } .btcpay-input-price { -moz-appearance: textfield; border: none; box-shadow: none; text-align: center; font-size: 25px; margin: auto; border-radius: 5px; line-height: 35px; background: #fff; }.btcpay-input-price::-webkit-outer-spin-button, .btcpay-input-price::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } </style>
+    <style>
+    .update-notice {
+        background-color: #ffcc00; /* 醒目的黄色背景 */
+        color: #000; /* 黑色字体 */
+        padding: 15px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        border: 2px solid #e0a800;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .update-notice a {
+        color: #d35400;
+        text-decoration: underline;
+        font-weight: bold;
+    }
+    </style>
+</head>
+<body>
+<header>BOOK YES[仅供学术研究使用]</header>
+<main>
+    <div class="left-panel">
+        <div class="section">
+            <img id="uploadedImage" alt="点击选择文件，即可上传，超过2048的图片会被压缩采样处理，望各位理解">
+        </div>
+        <p id="progress" class="progress"></p>
+    </div>
+    <div id="updateNotice" class="update-notice">
+<!--        重要更新: BOOK YES v7.0 现已上线！<br>新的功能、更好的体验！点击<a href="release_notes.html" target="_blank">这里</a>查看更新内容。-->
+        7.0优化了换衣时被遮盖区域的肢体的比例 位置推断
+        <br>机器成本问题 多人请求会有排队逻辑 先来后到
+        <br>会依次生成4张图 一般第4张效果最好
+        <br>生成列表内图 点击会放大 后右上角[动起来]可体验视频生成
+    </div>
+    <div class="right-panel">
+        <div class="section">
+            <input type="file" id="fileInput">
+            <button id="processImageButton_b" onclick="processImage_b()">选完图片点我bookyes 7.0</button>
+            <button id="regenerateButton_b" style="display: none;" onclick="regenerateImage_b()">不满意可以点我重新book图像</button>
+            <div class="file-input-container">
+                <label for="fileInput_handler_face" class="custom-file-label">先选择脸图</label>
+                <input type="file" id="fileInput_handler_face" style="display: none;">
+                <img id="uploadedFaceImage" src="" alt="预览脸图" style="display: none;">
+                <button id="processImageButton_b_face_p" onclick="processImage_b_face()">然后还可以体验换脸1.0</button>
+            </div>
+            <p id="handler-key"></p>
+            <input type="hidden" id="filename">
+            <input type="hidden" id="filename_handler">
+            <input type="hidden" id="filename_face">
+        </div>
+        <div class="section">
+            <button onclick="viewImage()">查看历史book yes</button>
+        </div>
+        <div class="section">
+            <form method="POST" action="https://mainnet.demo.btcpayserver.org/api/v1/invoices" class="btcpay-form btcpay-form--block">
+              <input type="hidden" name="storeId" value="Eyc43DoAJjMDjWmetaBL9VJehGDRHur6EfeajmXbK6Ls" />
+              <input type="hidden" name="price" value="10" />
+              <input type="hidden" name="currency" value="BTC" />
+            <button type="submit" class="submit" name="submit" style="min-width:209px;min-height:57px;border-radius:4px;border-style:none;background-color:#0f3b21;cursor:pointer;" title="Pay with BTCPay Server, a Self-Hosted Bitcoin Payment Processor"><span style="color:#fff">book it pei 联系</span>
+            </button></form>
+        </div>
+        <div class="left-panel">
+            <h2 id="specialImageListTitle" style="display: none;">预处理列表</h2>
+            <div id="specialImageList" class="image-list" style="display: none;"></div>
+            <!-- Horizontal Line Separator -->
+            <hr style="border-color: #555; margin: 30px 0;">
+            <h2 id="imageListTitle">生成列表</h2>
+            <div id="imageList" class="image-list"></div>
+        </div>
+        <div class="bottom-container">
+            <span onclick="handleClick()" class="clickable-text">Book Yes(不可言说)</span>
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+            <div id="onlineUsers" class="online-users">在线人数: 0</div>
+        </div>
+        <div class="section" id="bookYesSection">
+            <button onclick="processImage_b()" style="display: none;">book图像7.0</button>
+            <button onclick="load_lora_b()" style="display: none;">导入C</button>
+            <input type="hidden" id="lora_id" placeholder="C的id">
+            <input type="hidden" id="wei_id" placeholder="C的wei">
+            <input type="hidden" id="prompt" placeholder="正向">
+            <input type="hidden" id="reverse_prompt" placeholder="负向">
+            <input type="hidden" id="prompt_2" placeholder="正向2">
+            <input type="hidden" id="reverse_prompt_2" placeholder="负向2">
+            <input type="hidden" id="def_skin" placeholder="负向2">
+            <input type="hidden" id="num_inference_steps" placeholder="处理精细度50-100">
+            <input type="hidden" id="guidance_scale" placeholder="1-10自由">
+            <input type="hidden" id="re_mask" placeholder="重新生成掩码(会慢)">
+            <input type="hidden" id="seed" placeholder="0-100随机">
+            <input type="hidden" id="strength" placeholder="创意度0-1">
+            <input type="hidden" id="re_p" placeholder="控制层上开始">
+            <input type="hidden" id="re_b" placeholder="控制层上结束">
+            <input type="hidden" id="ha_p" placeholder="处理像素范围">
+            <input type="hidden" id="ga_b" placeholder="模糊成都">
+        </div>
+    </div>
+</main>
+<div id="overlay" class="overlay" onclick="closeOverlay()">正在book yes(不可言说，点三次蒙层关闭)</div>
+<div class="fullscreen-overlay" onclick="closeFullscreenImage()">
+    <img id="fullscreenImage" alt="全屏图片">
+    <input type="hidden" id="v_filename">
+    <button class="fullscreen-close-button" onclick="processImage_v()">动起来</button>
+</div>
+<script src="js/ze_end.js"></script>
+<!--<script>-->
+<!--    document.getElementById('uploadedImage').addEventListener('click', function() {-->
+<!--        // 要传入的图片文件名和其他参数-->
+<!--        const filename = document.getElementById('filename').value;-->
+<!--        const fileName = filename;-->
+<!--        // 打开绘图页面为浮窗，并传入图片文件名和其他参数-->
+<!--        window.open(`drawing.html?file_name=${encodeURIComponent(fileName)}`, '绘图板', 'width=800,height=600');-->
+<!--    });-->
+<!--</script>-->
+</body>
+</html>

@@ -1,0 +1,78 @@
+sudo dnf groupinstall "Development Tools"
+sudo dnf install gcc openssl-devel bzip2-devel libffi-devel zlib-devel make sqlite-devel readline-devel
+
+sudo dnf install centos-release-stream
+sudo dnf install gcc-toolset-11
+
+#启用 gcc 11
+scl enable gcc-toolset-11 bash
+
+sudo dnf install -y nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+sudo systemctl status nginx
+
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+sudo dnf clean all
+sudo dnf install cuda
+
+
+nvcc --version
+export PATH=/usr/local/cuda-12.6/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64:$LD_LIBRARY_PATH
+
+sudo dnf install cuda
+
+# ffmpeg 不一定行
+sudo dnf install https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm
+sudo dnf install https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm
+sudo dnf install ffmpeg ffmpeg-devel
+sudo make altinstall
+
+gcc --version
+openssl version
+rpm -q bzip2-devel libffi-devel zlib-devel make readline-devel sqlite-devel
+
+wget https://www.python.org/ftp/python/3.10.12/Python-3.10.12.tgz
+tar -xvzf Python-3.10.12.tgz
+cd Python-3.10.12
+
+./configure --enable-optimizations
+make -j $(nproc)  # 并行编译，使用 CPU 的所有核心
+
+python3.10 -m pip install --upgrade pip
+
+pip3.10 install -r requirements.txt
+
+
+conda env create -f ghost_environment.yml
+#conda env create -f icon_environment.yml
+#conda env create -f myenv_environment.yml
+conda env create -f pytorch3d_env_environment.yml
+conda env create -f simswap_env_environment.yml
+
+
+
+
+
+
+
+
+文件地址， 目录 ~/.bashrc
+# .bashrc
+# User specific aliases and functions
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+source /opt/rh/gcc-toolset-11/enable
+export PATH=/usr/local/cuda/bin:$PATH
+export PATH=$PATH:/nvme0n1-disk/installBase/ffmpeg-7.0.2-amd64-static
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+export HF_HOME=/nvme0n1-disk/h_cache
+export TORCH_HOME=/nvme0n1-disk/t_cache
+export TRANSFORMERS_CACHE=/nvme0n1-disk/tr_cache
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+

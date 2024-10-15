@@ -1,0 +1,246 @@
+/mnt/sessd/usr/local/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2024-08-10 21:58:04.954395: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2024-08-10 21:58:05.415042: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+2024-08-10 21:58:05.415083: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2024-08-10 21:58:07.330457: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
+2024-08-10 21:58:07.330571: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
+2024-08-10 21:58:07.330584: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+ * Serving Flask app 'webapp2.0'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5003
+ * Running on http://172.19.228.15:5003
+[33mPress CTRL+C to quit[0m
+ * Restarting with watchdog (inotify)
+/mnt/sessd/usr/local/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2024-08-10 21:58:15.470659: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2024-08-10 21:58:15.643465: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /mnt/sessd/usr/local/lib/python3.10/site-packages/cv2/../../lib64:
+2024-08-10 21:58:15.643513: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2024-08-10 21:58:16.453738: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /mnt/sessd/usr/local/lib/python3.10/site-packages/cv2/../../lib64:
+2024-08-10 21:58:16.453876: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /mnt/sessd/usr/local/lib/python3.10/site-packages/cv2/../../lib64:
+2024-08-10 21:58:16.453891: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+ * Debugger is active!
+ * Debugger PIN: 275-822-462
+205.198.122.78 - - [10/Aug/2024 21:58:21] "GET / HTTP/1.1" 200 -
+205.198.122.79 - - [10/Aug/2024 21:59:14] "GET / HTTP/1.1" 200 -
+205.198.122.78 - - [10/Aug/2024 21:59:20] "POST /upload HTTP/1.1" 200 -
+205.198.122.80 - - [10/Aug/2024 21:59:21] "GET /uploads/3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+205.198.122.80 - - [10/Aug/2024 21:59:23] "GET /socket.io/?EIO=4&transport=polling&t=P4ybZ7l HTTP/1.1" 200 -
+205.198.122.80 - - [10/Aug/2024 21:59:23] "POST /socket.io/?EIO=4&transport=polling&t=P4ybZEw&sid=M8VwOkLqEhRxFBEXAAAA HTTP/1.1" 200 -
+205.198.122.79 - - [10/Aug/2024 21:59:23] "GET /socket.io/?EIO=4&transport=polling&t=P4ybZEy&sid=M8VwOkLqEhRxFBEXAAAA HTTP/1.1" 200 -
+205.198.122.81 - - [10/Aug/2024 21:59:24] "GET /socket.io/?EIO=4&transport=polling&t=P4ybZQ0&sid=M8VwOkLqEhRxFBEXAAAA HTTP/1.1" 200 -
+User Drdi8WyIsWjrbPfNAAAB joined room 30648f72-6795-4a16-8da1-04f81c184dd5
+got it process_image_b
+205.198.122.79 - - [10/Aug/2024 21:59:24] "POST /socket.io/?EIO=4&transport=polling&t=P4ybZQ1&sid=M8VwOkLqEhRxFBEXAAAA HTTP/1.1" 200 -
+prompt: nude reverse_prompt: deformed, bad anatomy, mutated, long neck num_inference_steps: 50, guidance_scale: 8.0, seed: 68 strength: 0.951 prompt_2: big asses, big and natural boobs reverse_prompt_2: disconnected limbs,unnaturally contorted position, unnaturally thin waist
+unique_key: 168af034308ab322dcb9b0859a756b26 processed_results: {} 
+re_mask: F 
+mask_clear_path: static/uploads/mask_clear_return_3fc3cd52ced292773a155b9e9f90933b.png 
+  re_p: 0 re_b: 0 or ha_p: 15  or ga_b: 0 
+begin check close mask: static/uploads/3fc3cd52ced292773a155b9e9f90933b.png
+/mnt/sessd/usr/local/lib/python3.10/site-packages/transformers/utils/deprecation.py:165: UserWarning: The following named arguments are not valid for `SegformerImageProcessor.__init__` and were ignored: 'feature_extractor_type'
+  return func(*args, **kwargs)
+begin close mask cuda
+finish close mask cuda
+finish split close mask cuda
+begin close mask convert_to_ndarray
+finish close mask convert_to_ndarray
+begin dilate_mask_by_percentage close mask
+finish dilate_mask_by_percentage close mask
+finish check close mask: static/uploads/3fc3cd52ced292773a155b9e9f90933b.png
+finish draw close mask
+begin check pose....
+/mnt/sessd/usr/local/lib/python3.10/site-packages/torch/functional.py:513: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at ../aten/src/ATen/native/TensorShape.cpp:3609.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+finish check pose....
+it ..... [[0 0 0 ... 0 0 0]
+ [0 0 0 ... 0 0 0]
+ [0 0 0 ... 0 0 0]
+ ...
+ [0 0 0 ... 0 0 0]
+ [0 0 0 ... 0 0 0]
+ [0 0 0 ... 0 0 0]]
+start LaMaModel remove closes
+/mnt/essd/ai_tools/lama/saicinpainting/training/trainers/__init__.py:27: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state = torch.load(path, map_location=map_location)
+success LaMaModel remove closes
+start apply_skin_tone
+start extract_max_square...
+start extract_max_square...start extract_max_square...
+
+start extract_max_square...
+start extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+start extract_max_square...
+start extract_max_square...
+start extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+start extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+start ThreadPoolExecutor extract_max_square...
+finish extract_max_square_fast...
+Upper_Arm_Right found wen li
+finish extract_max_square_fast...
+Upper_Leg_Right found wen li
+finish extract_max_square_fast...
+Upper_Leg_Left found wen li
+finish extract_max_square_fast...
+Lower_Arm_Right found wen li
+finish extract_max_square_fast...
+Upper_Arm_Left found wen li
+finish extract_max_square_fast...
+Lower_Leg_Right found wen li
+finish extract_max_square_fast...
+Lower_Arm_Left found wen li
+finish extract_max_square_fast...
+finish extract_max_square_fast...
+Lower_Leg_Left found wen li
+Torso found wen li
+Torso
+Torso
+Upper_Leg_Right
+Upper_Leg_Left
+Upper_Leg_Right
+Upper_Leg_Left
+Lower_Leg_Right
+Lower_Leg_Left
+Lower_Leg_Right
+Lower_Leg_Left
+Upper_Arm_Left
+Upper_Arm_Right
+Upper_Arm_Left
+Upper_Arm_Right
+Lower_Arm_Left
+Lower_Arm_Right
+Lower_Arm_Left
+Lower_Arm_Right
+Torso_1 had wen li
+Torso_2 had wen li
+Upper_Leg_Right_7 had not wen li use before
+Upper_Leg_Right_7 had not wen li use before and before is none use Torso_1
+Upper_Leg_Left_8 had not wen li use before
+Upper_Leg_Left_8 had not wen li use before and before is none use Torso_1
+Upper_Leg_Right_9 had not wen li use before
+Upper_Leg_Right_9 had not wen li use before and before is none use Torso_1
+Upper_Leg_Left_10 had not wen li use before
+Upper_Leg_Left_10 had not wen li use before and before is none use Torso_1
+Lower_Leg_Right_11 had not wen li use before
+Lower_Leg_Right_11 had not wen li use before and before is none use Torso_1
+Lower_Leg_Left_12 had wen li
+Lower_Leg_Right_13 had not wen li use before
+Lower_Leg_Right_13 had not wen li use before and before is none use Torso_1
+Lower_Leg_Left_14 had wen li
+Upper_Arm_Left_15 had wen li
+Upper_Arm_Right_16 had wen li
+Upper_Arm_Left_17 had wen li
+Upper_Arm_Right_18 had wen li
+Lower_Arm_Left_19 had wen li
+Lower_Arm_Right_20 had wen li
+Lower_Arm_Left_21 had wen li
+Lower_Arm_Right_22 had wen li
+finish check pose an ge wenli....
+finish trans wenli an clear
+ge replace_mask_path suc static/uploads/3fc3cd52ced292773a155b9e9f90933b.png to static/uploads/mask_3fc3cd52ced292773a155b9e9f90933b.png
+205.198.122.80 - - [10/Aug/2024 21:59:58] "GET /uploads/clear_return_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+INFO:werkzeug:205.198.122.80 - - [10/Aug/2024 21:59:58] "GET /uploads/clear_return_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+205.198.122.77 - - [10/Aug/2024 21:59:58] "GET /uploads/filled_use_mask_image_pil_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+INFO:werkzeug:205.198.122.77 - - [10/Aug/2024 21:59:58] "GET /uploads/filled_use_mask_image_pil_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+205.198.122.81 - - [10/Aug/2024 21:59:58] "GET /uploads/filled_image_pil_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+INFO:werkzeug:205.198.122.81 - - [10/Aug/2024 21:59:58] "GET /uploads/filled_image_pil_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+The config attributes {'decay': 0.9999, 'inv_gamma': 1.0, 'min_decay': 0.0, 'optimization_step': 37000, 'power': 0.6666666666666666, 'update_after_step': 0, 'use_ema_warmup': False} were passed to UNet2DConditionModel, but are not expected and will be ignored. Please verify your config.json configuration file.
+UNet total keys: 1680, loaded keys: 1680, missing keys: 0
+VAE total keys: 248, loaded keys: 248, missing keys: 0
+Text Encoder 1 total keys: 196, loaded keys: 196, missing keys: 0
+Text Encoder 2 total keys: 517, loaded keys: 517, missing keys: 0
+total keys: 1928 text_encoder keys:  196 text_encoder_2 keys: 517
+this /mnt/sessd/civitai-downloader/inpaintSDXLPony_juggerInpaintV8.safetensors len is 835
+Loading UNet weights...
+UNet total keys: 1680, loaded keys: 1678, missing keys: 2
+Missing UNet keys: ['up_blocks.0.upsamplers.0.conv.weight', 'up_blocks.0.upsamplers.0.conv.bias']
+
+All calculated num_head_channels: [170, 170, 170, 170, 170, 170]
+config['num_head_channels']: 170
+Loading VAE weights...
+All calculated num_head_channels: [170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170]
+config['num_head_channels']: 170
+VAE total keys: 248, loaded keys: 248, missing keys: 0
+Missing VAE keys: []
+
+Loading text encoder weights...
+Loading text encoder weights...
+Text encoder total keys: 196, loaded keys: 835, missing keys: 0
+Missing text encoder keys: []
+
+Loading text encoder 2 weights...
+Loading text encoder 2 weights...
+Text encoder 2 total keys: 517, loaded keys: 517, missing keys: 0
+Missing text encoder 2 keys: []
+
+suc lora
+gen use prompt: nude reverse_prompt: deformed, bad anatomy, mutated, long neck num_inference_steps: 50, guidance_scale: 8.0, strength: 0.951 prompt_2: big asses, big and natural boobs reverse_prompt_2: disconnected limbs,unnaturally contorted position, unnaturally thin waist
+/mnt/sessd/usr/local/lib/python3.10/site-packages/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py:1311: FutureWarning: `callback` is deprecated and will be removed in version 1.0.0. Passing `callback` as an input argument to `__call__` is deprecated, consider use `callback_on_step_end`
+  deprecate(
+/mnt/sessd/usr/local/lib/python3.10/site-packages/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py:1317: FutureWarning: `callback_steps` is deprecated and will be removed in version 1.0.0. Passing `callback_steps` as an input argument to `__call__` is deprecated, consider use `callback_on_step_end`
+  deprecate(
+  0%|          | 0/47 [00:00<?, ?it/s]  2%|▏         | 1/47 [00:00<00:36,  1.27it/s]  4%|▍         | 2/47 [00:01<00:23,  1.88it/s]  6%|▋         | 3/47 [00:01<00:27,  1.60it/s]  9%|▊         | 4/47 [00:02<00:28,  1.49it/s] 11%|█         | 5/47 [00:03<00:29,  1.43it/s] 13%|█▎        | 6/47 [00:04<00:29,  1.39it/s] 15%|█▍        | 7/47 [00:04<00:29,  1.38it/s] 17%|█▋        | 8/47 [00:05<00:28,  1.37it/s] 19%|█▉        | 9/47 [00:06<00:28,  1.35it/s] 21%|██▏       | 10/47 [00:07<00:27,  1.35it/s] 23%|██▎       | 11/47 [00:07<00:26,  1.34it/s] 26%|██▌       | 12/47 [00:08<00:26,  1.33it/s] 28%|██▊       | 13/47 [00:09<00:25,  1.33it/s] 30%|██▉       | 14/47 [00:10<00:24,  1.33it/s] 32%|███▏      | 15/47 [00:10<00:24,  1.33it/s] 34%|███▍      | 16/47 [00:11<00:23,  1.32it/s] 36%|███▌      | 17/47 [00:12<00:22,  1.32it/s] 38%|███▊      | 18/47 [00:13<00:22,  1.31it/s] 40%|████      | 19/47 [00:13<00:21,  1.31it/s] 43%|████▎     | 20/47 [00:14<00:20,  1.31it/s] 45%|████▍     | 21/47 [00:15<00:19,  1.30it/s] 47%|████▋     | 22/47 [00:16<00:19,  1.30it/s] 49%|████▉     | 23/47 [00:17<00:18,  1.30it/s] 51%|█████     | 24/47 [00:17<00:17,  1.30it/s] 53%|█████▎    | 25/47 [00:18<00:16,  1.30it/s] 55%|█████▌    | 26/47 [00:19<00:16,  1.31it/s] 57%|█████▋    | 27/47 [00:20<00:15,  1.31it/s] 60%|█████▉    | 28/47 [00:20<00:14,  1.31it/s] 62%|██████▏   | 29/47 [00:21<00:13,  1.31it/s] 64%|██████▍   | 30/47 [00:22<00:13,  1.31it/s] 66%|██████▌   | 31/47 [00:23<00:12,  1.31it/s] 68%|██████▊   | 32/47 [00:23<00:11,  1.31it/s] 70%|███████   | 33/47 [00:24<00:10,  1.30it/s] 72%|███████▏  | 34/47 [00:25<00:09,  1.31it/s] 74%|███████▍  | 35/47 [00:26<00:09,  1.30it/s] 77%|███████▋  | 36/47 [00:26<00:08,  1.30it/s] 79%|███████▊  | 37/47 [00:27<00:07,  1.30it/s] 81%|████████  | 38/47 [00:28<00:06,  1.30it/s] 83%|████████▎ | 39/47 [00:29<00:06,  1.30it/s] 85%|████████▌ | 40/47 [00:30<00:05,  1.30it/s] 87%|████████▋ | 41/47 [00:30<00:04,  1.30it/s] 89%|████████▉ | 42/47 [00:31<00:03,  1.30it/s] 91%|█████████▏| 43/47 [00:32<00:03,  1.30it/s] 94%|█████████▎| 44/47 [00:33<00:02,  1.29it/s] 96%|█████████▌| 45/47 [00:33<00:01,  1.29it/s] 98%|█████████▊| 46/47 [00:34<00:00,  1.29it/s]100%|██████████| 47/47 [00:35<00:00,  1.29it/s]100%|██████████| 47/47 [00:35<00:00,  1.32it/s]
+gen use prompt: nude reverse_prompt: deformed, bad anatomy, mutated, long neck num_inference_steps: 50, guidance_scale: 8.0, strength: 0.951 prompt_2: big asses, big and natural boobs reverse_prompt_2: disconnected limbs,unnaturally contorted position, unnaturally thin waist
+205.198.122.79 - - [10/Aug/2024 22:02:41] "GET /uploads/processed_org_r_168af034308ab322dcb9b0859a756b26.png HTTP/1.1" 200 -
+INFO:werkzeug:205.198.122.79 - - [10/Aug/2024 22:02:41] "GET /uploads/processed_org_r_168af034308ab322dcb9b0859a756b26.png HTTP/1.1" 200 -
+  0%|          | 0/47 [00:00<?, ?it/s]  2%|▏         | 1/47 [00:00<00:35,  1.29it/s]  4%|▍         | 2/47 [00:01<00:24,  1.87it/s]  6%|▋         | 3/47 [00:01<00:28,  1.55it/s]  9%|▊         | 4/47 [00:02<00:30,  1.43it/s] 11%|█         | 5/47 [00:03<00:30,  1.37it/s] 13%|█▎        | 6/47 [00:04<00:30,  1.33it/s] 15%|█▍        | 7/47 [00:05<00:30,  1.31it/s] 17%|█▋        | 8/47 [00:05<00:30,  1.30it/s] 19%|█▉        | 9/47 [00:06<00:29,  1.29it/s] 21%|██▏       | 10/47 [00:07<00:28,  1.28it/s] 23%|██▎       | 11/47 [00:08<00:28,  1.27it/s] 26%|██▌       | 12/47 [00:09<00:27,  1.27it/s] 28%|██▊       | 13/47 [00:09<00:26,  1.27it/s] 30%|██▉       | 14/47 [00:10<00:25,  1.27it/s] 32%|███▏      | 15/47 [00:11<00:25,  1.27it/s] 34%|███▍      | 16/47 [00:12<00:24,  1.27it/s] 36%|███▌      | 17/47 [00:12<00:23,  1.26it/s] 38%|███▊      | 18/47 [00:13<00:23,  1.26it/s] 40%|████      | 19/47 [00:14<00:22,  1.26it/s] 43%|████▎     | 20/47 [00:15<00:21,  1.25it/s] 45%|████▍     | 21/47 [00:16<00:20,  1.26it/s] 47%|████▋     | 22/47 [00:16<00:19,  1.25it/s] 49%|████▉     | 23/47 [00:17<00:19,  1.25it/s] 51%|█████     | 24/47 [00:18<00:18,  1.25it/s] 53%|█████▎    | 25/47 [00:19<00:17,  1.25it/s] 55%|█████▌    | 26/47 [00:20<00:16,  1.25it/s] 57%|█████▋    | 27/47 [00:20<00:16,  1.25it/s] 60%|█████▉    | 28/47 [00:21<00:15,  1.24it/s] 62%|██████▏   | 29/47 [00:22<00:14,  1.24it/s] 64%|██████▍   | 30/47 [00:23<00:13,  1.24it/s] 66%|██████▌   | 31/47 [00:24<00:12,  1.24it/s] 68%|██████▊   | 32/47 [00:25<00:12,  1.25it/s] 70%|███████   | 33/47 [00:25<00:11,  1.25it/s] 72%|███████▏  | 34/47 [00:26<00:10,  1.25it/s] 74%|███████▍  | 35/47 [00:27<00:09,  1.25it/s] 77%|███████▋  | 36/47 [00:28<00:08,  1.25it/s] 79%|███████▊  | 37/47 [00:28<00:07,  1.25it/s] 81%|████████  | 38/47 [00:29<00:07,  1.26it/s] 83%|████████▎ | 39/47 [00:30<00:06,  1.25it/s] 85%|████████▌ | 40/47 [00:31<00:05,  1.25it/s] 87%|████████▋ | 41/47 [00:32<00:04,  1.25it/s] 89%|████████▉ | 42/47 [00:32<00:04,  1.25it/s] 91%|█████████▏| 43/47 [00:33<00:03,  1.25it/s] 94%|█████████▎| 44/47 [00:34<00:02,  1.25it/s] 96%|█████████▌| 45/47 [00:35<00:01,  1.25it/s] 98%|█████████▊| 46/47 [00:36<00:00,  1.25it/s]100%|██████████| 47/47 [00:37<00:00,  1.24it/s]100%|██████████| 47/47 [00:37<00:00,  1.27it/s]
+gen use prompt: nude reverse_prompt: deformed, bad anatomy, mutated, long neck num_inference_steps: 50, guidance_scale: 8.0, strength: 0.951 prompt_2: big asses, big and natural boobs reverse_prompt_2: disconnected limbs,unnaturally contorted position, unnaturally thin waist
+205.198.122.80 - - [10/Aug/2024 22:03:22] "GET /uploads/processed_clear_r_168af034308ab322dcb9b0859a756b26_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+INFO:werkzeug:205.198.122.80 - - [10/Aug/2024 22:03:22] "GET /uploads/processed_clear_r_168af034308ab322dcb9b0859a756b26_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1" 200 -
+  0%|          | 0/47 [00:00<?, ?it/s]  2%|▏         | 1/47 [00:00<00:36,  1.25it/s]  4%|▍         | 2/47 [00:01<00:24,  1.82it/s]  6%|▋         | 3/47 [00:01<00:29,  1.50it/s]  9%|▊         | 4/47 [00:02<00:31,  1.38it/s] 11%|█         | 5/47 [00:03<00:31,  1.33it/s] 13%|█▎        | 6/47 [00:04<00:31,  1.30it/s] 15%|█▍        | 7/47 [00:05<00:31,  1.28it/s] 17%|█▋        | 8/47 [00:06<00:30,  1.26it/s] 19%|█▉        | 9/47 [00:06<00:30,  1.25it/s] 21%|██▏       | 10/47 [00:07<00:29,  1.25it/s] 23%|██▎       | 11/47 [00:08<00:28,  1.24it/s] 26%|██▌       | 12/47 [00:09<00:28,  1.24it/s] 28%|██▊       | 13/47 [00:10<00:27,  1.24it/s] 30%|██▉       | 14/47 [00:10<00:26,  1.24it/s] 32%|███▏      | 15/47 [00:11<00:25,  1.24it/s] 34%|███▍      | 16/47 [00:12<00:25,  1.23it/s] 36%|███▌      | 17/47 [00:13<00:24,  1.23it/s] 38%|███▊      | 18/47 [00:14<00:23,  1.23it/s] 40%|████      | 19/47 [00:14<00:22,  1.23it/s] 43%|████▎     | 20/47 [00:15<00:21,  1.23it/s] 45%|████▍     | 21/47 [00:16<00:21,  1.23it/s] 47%|████▋     | 22/47 [00:17<00:20,  1.23it/s] 49%|████▉     | 23/47 [00:18<00:19,  1.23it/s] 51%|█████     | 24/47 [00:19<00:18,  1.22it/s] 53%|█████▎    | 25/47 [00:19<00:18,  1.22it/s] 55%|█████▌    | 26/47 [00:20<00:17,  1.22it/s] 57%|█████▋    | 27/47 [00:21<00:16,  1.22it/s] 60%|█████▉    | 28/47 [00:22<00:15,  1.22it/s] 62%|██████▏   | 29/47 [00:23<00:14,  1.22it/s] 64%|██████▍   | 30/47 [00:23<00:14,  1.21it/s] 66%|██████▌   | 31/47 [00:24<00:13,  1.22it/s] 68%|██████▊   | 32/47 [00:25<00:12,  1.21it/s] 70%|███████   | 33/47 [00:26<00:11,  1.21it/s] 72%|███████▏  | 34/47 [00:27<00:10,  1.21it/s] 74%|███████▍  | 35/47 [00:28<00:09,  1.21it/s] 77%|███████▋  | 36/47 [00:28<00:09,  1.21it/s] 79%|███████▊  | 37/47 [00:29<00:08,  1.21it/s] 81%|████████  | 38/47 [00:30<00:07,  1.21it/s] 83%|████████▎ | 39/47 [00:31<00:06,  1.21it/s] 85%|████████▌ | 40/47 [00:32<00:05,  1.21it/s] 87%|████████▋ | 41/47 [00:33<00:04,  1.21it/s] 89%|████████▉ | 42/47 [00:33<00:04,  1.21it/s] 91%|█████████▏| 43/47 [00:34<00:03,  1.21it/s] 94%|█████████▎| 44/47 [00:35<00:02,  1.21it/s] 96%|█████████▌| 45/47 [00:36<00:01,  1.21it/s] 98%|█████████▊| 46/47 [00:37<00:00,  1.21it/s]100%|██████████| 47/47 [00:38<00:00,  1.21it/s]100%|██████████| 47/47 [00:38<00:00,  1.23it/s]
+205.198.122.81 - - [10/Aug/2024 22:04:04] "GET /uploads/processed_r_168af034308ab322dcb9b0859a756b26.png HTTP/1.1" 200 -
+INFO:werkzeug:205.198.122.81 - - [10/Aug/2024 22:04:04] "GET /uploads/processed_r_168af034308ab322dcb9b0859a756b26.png HTTP/1.1" 200 -
+205.198.122.78 - - [10/Aug/2024 22:04:05] "GET /uploads/fix_processed_it_168af034308ab322dcb9b0859a756b26.png HTTP/1.1" 200 -
+INFO:werkzeug:205.198.122.78 - - [10/Aug/2024 22:04:05] "GET /uploads/fix_processed_it_168af034308ab322dcb9b0859a756b26.png HTTP/1.1" 200 -
+205.198.122.79 - - [10/Aug/2024 22:07:47] "[36mGET /uploads/processed_clear_r_168af034308ab322dcb9b0859a756b26_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1[0m" 304 -
+INFO:werkzeug:205.198.122.79 - - [10/Aug/2024 22:07:47] "[36mGET /uploads/processed_clear_r_168af034308ab322dcb9b0859a756b26_3fc3cd52ced292773a155b9e9f90933b.png HTTP/1.1[0m" 304 -
+205.198.122.81 - - [10/Aug/2024 22:17:13] "GET /socket.io/?EIO=4&transport=websocket&sid=M8VwOkLqEhRxFBEXAAAA HTTP/1.1" 200 -
+INFO:werkzeug:205.198.122.81 - - [10/Aug/2024 22:17:13] "GET /socket.io/?EIO=4&transport=websocket&sid=M8VwOkLqEhRxFBEXAAAA HTTP/1.1" 200 -
+221.218.140.157 - - [10/Aug/2024 22:17:46] "GET /socket.io/?EIO=4&transport=polling&t=P4yfmZo HTTP/1.1" 200 -
+INFO:werkzeug:221.218.140.157 - - [10/Aug/2024 22:17:46] "GET /socket.io/?EIO=4&transport=polling&t=P4yfmZo HTTP/1.1" 200 -
+221.218.140.157 - - [10/Aug/2024 22:17:46] "POST /socket.io/?EIO=4&transport=polling&t=P4yfmc6&sid=RTIn2VmVED6FamZbAAAC HTTP/1.1" 200 -
+INFO:werkzeug:221.218.140.157 - - [10/Aug/2024 22:17:46] "POST /socket.io/?EIO=4&transport=polling&t=P4yfmc6&sid=RTIn2VmVED6FamZbAAAC HTTP/1.1" 200 -
+221.218.140.157 - - [10/Aug/2024 22:17:46] "GET /socket.io/?EIO=4&transport=polling&t=P4yfmc7&sid=RTIn2VmVED6FamZbAAAC HTTP/1.1" 200 -
+INFO:werkzeug:221.218.140.157 - - [10/Aug/2024 22:17:46] "GET /socket.io/?EIO=4&transport=polling&t=P4yfmc7&sid=RTIn2VmVED6FamZbAAAC HTTP/1.1" 200 -
+221.218.140.157 - - [10/Aug/2024 22:17:47] "GET /socket.io/?EIO=4&transport=polling&t=P4yfmeg&sid=RTIn2VmVED6FamZbAAAC HTTP/1.1" 200 -
+INFO:werkzeug:221.218.140.157 - - [10/Aug/2024 22:17:47] "GET /socket.io/?EIO=4&transport=polling&t=P4yfmeg&sid=RTIn2VmVED6FamZbAAAC HTTP/1.1" 200 -
+User XfhcHeNwFxkxHRshAAAD joined room 30648f72-6795-4a16-8da1-04f81c184dd5
+ * Detected change in '/mnt/essd/ai_tools/webapp3.0.py', reloading
+INFO:werkzeug: * Detected change in '/mnt/essd/ai_tools/webapp3.0.py', reloading
+ * Detected change in '/mnt/essd/ai_tools/webapp3.0.py', reloading
+INFO:werkzeug: * Detected change in '/mnt/essd/ai_tools/webapp3.0.py', reloading
+ * Detected change in '/mnt/essd/ai_tools/webapp3.0.py', reloading
+INFO:werkzeug: * Detected change in '/mnt/essd/ai_tools/webapp3.0.py', reloading
+ * Restarting with watchdog (inotify)
+/mnt/sessd/usr/local/lib/python3.10/site-packages/transformers/utils/hub.py:127: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+2024-08-10 22:36:43.002581: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2024-08-10 22:36:43.200958: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /mnt/sessd/usr/local/lib/python3.10/site-packages/cv2/../../lib64:
+2024-08-10 22:36:43.201000: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2024-08-10 22:36:44.521651: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /mnt/sessd/usr/local/lib/python3.10/site-packages/cv2/../../lib64:
+2024-08-10 22:36:44.521787: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /mnt/sessd/usr/local/lib/python3.10/site-packages/cv2/../../lib64:
+2024-08-10 22:36:44.521800: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+ * Debugger is active!
+ * Debugger PIN: 275-822-462
+221.218.140.157 - - [10/Aug/2024 22:36:48] "GET /socket.io/?EIO=4&transport=polling&t=P4yk5C0 HTTP/1.1" 200 -
+221.218.140.157 - - [10/Aug/2024 22:36:48] "POST /socket.io/?EIO=4&transport=polling&t=P4yk7UO&sid=ZlHx6uBLMtXfNKkSAAAA HTTP/1.1" 200 -
+221.218.140.157 - - [10/Aug/2024 22:36:48] "GET /socket.io/?EIO=4&transport=polling&t=P4yk7UQ&sid=ZlHx6uBLMtXfNKkSAAAA HTTP/1.1" 200 -
+221.218.140.157 - - [10/Aug/2024 22:36:48] "GET /socket.io/?EIO=4&transport=polling&t=P4yk7WF&sid=ZlHx6uBLMtXfNKkSAAAA HTTP/1.1" 200 -
+User 4oVwFWxZKqdhRZccAAAB joined room 30648f72-6795-4a16-8da1-04f81c184dd5

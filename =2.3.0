@@ -1,0 +1,4 @@
+Looking in indexes: http://mirrors.aliyun.com/pypi/simple/
+Requirement already satisfied: omegaconf in /mnt/sessd/usr/local/lib/python3.10/site-packages (2.1.2)
+Requirement already satisfied: antlr4-python3-runtime==4.8 in /mnt/sessd/usr/local/lib/python3.10/site-packages (from omegaconf) (4.8)
+Requirement already satisfied: PyYAML>=5.1.0 in /mnt/sessd/usr/local/lib/python3.10/site-packages (from omegaconf) (6.0.1)

@@ -1,0 +1,243 @@
+/nvme0n1-disk/miniconda3/envs/simswap_env/lib/python3.10/site-packages/albumentations/__init__.py:13: UserWarning: A new version of Albumentations is available: 1.4.17 (you have 1.4.14). Upgrade using: pip install -U albumentations. To disable automatic update checks, set the environment variable NO_ALBUMENTATIONS_UPDATE to 1.
+  check_for_updates()
+INFO:     Started server process [511719]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
+------------ Options -------------
+Arc_path: arcface_model/arcface_checkpoint.tar
+aspect_ratio: 1.0
+batchSize: 8
+checkpoints_dir: ./checkpoints
+cluster_path: features_clustered_010.npy
+crop_size: 512
+data_type: 32
+dataroot: ./datasets/cityscapes/
+display_winsize: 512
+engine: None
+export_onnx: None
+feat_num: 3
+fineSize: 512
+fp16: False
+gpu_ids: [0]
+how_many: 50
+id_thres: 0.03
+image_size: 224
+input_nc: 3
+instance_feat: False
+isTrain: False
+label_feat: False
+label_nc: 0
+latent_size: 512
+loadSize: 1024
+load_features: False
+local_rank: 0
+max_dataset_size: inf
+multisepcific_dir: ./demo_file/multispecific
+nThreads: 2
+n_blocks_global: 6
+n_blocks_local: 3
+n_clusters: 10
+n_downsample_E: 4
+n_downsample_global: 3
+n_local_enhancers: 1
+name: people
+nef: 16
+netG: global
+ngf: 64
+niter_fix_global: 0
+no_flip: False
+no_instance: False
+no_simswaplogo: False
+norm: batch
+norm_G: spectralspadesyncbatch3x3
+ntest: inf
+onnx: None
+output_nc: 3
+output_path: ./output/
+phase: test
+pic_a_path: G:/swap_data/ID/elon-musk-hero-image.jpeg
+pic_b_path: ./demo_file/multi_people.jpg
+pic_specific_path: ./crop_224/zrf.jpg
+resize_or_crop: scale_width
+results_dir: ./results/
+semantic_nc: 3
+serial_batches: False
+temp_path: ./temp_results
+tf_log: False
+use_dropout: False
+use_encoded_image: False
+use_mask: False
+verbose: False
+video_path: G:/swap_data/video/HSB_Demo_Trim.mp4
+which_epoch: latest
+-------------- End ----------------
+[ WARN:0@384.326] global loadsave.cpp:241 findDecoder imread_('./simswaplogo/simswaplogo.png'): can't open/read file: check file path/integrity
+Error occurred:
+Traceback (most recent call last):
+  File "/nvme0n1-disk/swapface/SimSwap/API.py", line 91, in process_pics
+    final_img = swap_multi(data.pic_b, data.source_path_list, data.target_path_list)
+  File "/nvme0n1-disk/swapface/SimSwap/SimSwapMultispecific.py", line 88, in swap_multi
+    logoclass = watermark_image('./simswaplogo/simswaplogo.png')
+  File "/nvme0n1-disk/swapface/SimSwap/util/add_watermark.py", line 26, in __init__
+    h,w,c = logo_image.shape
+AttributeError: 'NoneType' object has no attribute 'shape'
+INFO:     127.0.0.1:59806 - "POST /process_image_mul HTTP/1.1" 200 OK
+------------ Options -------------
+Arc_path: arcface_model/arcface_checkpoint.tar
+aspect_ratio: 1.0
+batchSize: 8
+checkpoints_dir: ./checkpoints
+cluster_path: features_clustered_010.npy
+crop_size: 512
+data_type: 32
+dataroot: ./datasets/cityscapes/
+display_winsize: 512
+engine: None
+export_onnx: None
+feat_num: 3
+fineSize: 512
+fp16: False
+gpu_ids: [0]
+how_many: 50
+id_thres: 0.03
+image_size: 224
+input_nc: 3
+instance_feat: False
+isTrain: False
+label_feat: False
+label_nc: 0
+latent_size: 512
+loadSize: 1024
+load_features: False
+local_rank: 0
+max_dataset_size: inf
+multisepcific_dir: ./demo_file/multispecific
+nThreads: 2
+n_blocks_global: 6
+n_blocks_local: 3
+n_clusters: 10
+n_downsample_E: 4
+n_downsample_global: 3
+n_local_enhancers: 1
+name: people
+nef: 16
+netG: global
+ngf: 64
+niter_fix_global: 0
+no_flip: False
+no_instance: False
+no_simswaplogo: False
+norm: batch
+norm_G: spectralspadesyncbatch3x3
+ntest: inf
+onnx: None
+output_nc: 3
+output_path: ./output/
+phase: test
+pic_a_path: G:/swap_data/ID/elon-musk-hero-image.jpeg
+pic_b_path: ./demo_file/multi_people.jpg
+pic_specific_path: ./crop_224/zrf.jpg
+resize_or_crop: scale_width
+results_dir: ./results/
+semantic_nc: 3
+serial_batches: False
+temp_path: ./temp_results
+tf_log: False
+use_dropout: False
+use_encoded_image: False
+use_mask: False
+verbose: False
+video_path: G:/swap_data/video/HSB_Demo_Trim.mp4
+which_epoch: latest
+-------------- End ----------------
+[ WARN:0@401.368] global loadsave.cpp:241 findDecoder imread_('./simswaplogo/simswaplogo.png'): can't open/read file: check file path/integrity
+Error occurred:
+Traceback (most recent call last):
+  File "/nvme0n1-disk/swapface/SimSwap/API.py", line 91, in process_pics
+    final_img = swap_multi(data.pic_b, data.source_path_list, data.target_path_list)
+  File "/nvme0n1-disk/swapface/SimSwap/SimSwapMultispecific.py", line 88, in swap_multi
+    logoclass = watermark_image('./simswaplogo/simswaplogo.png')
+  File "/nvme0n1-disk/swapface/SimSwap/util/add_watermark.py", line 26, in __init__
+    h,w,c = logo_image.shape
+AttributeError: 'NoneType' object has no attribute 'shape'
+INFO:     127.0.0.1:56338 - "POST /process_image_mul HTTP/1.1" 200 OK
+------------ Options -------------
+Arc_path: arcface_model/arcface_checkpoint.tar
+aspect_ratio: 1.0
+batchSize: 8
+checkpoints_dir: ./checkpoints
+cluster_path: features_clustered_010.npy
+crop_size: 512
+data_type: 32
+dataroot: ./datasets/cityscapes/
+display_winsize: 512
+engine: None
+export_onnx: None
+feat_num: 3
+fineSize: 512
+fp16: False
+gpu_ids: [0]
+how_many: 50
+id_thres: 0.03
+image_size: 224
+input_nc: 3
+instance_feat: False
+isTrain: False
+label_feat: False
+label_nc: 0
+latent_size: 512
+loadSize: 1024
+load_features: False
+local_rank: 0
+max_dataset_size: inf
+multisepcific_dir: ./demo_file/multispecific
+nThreads: 2
+n_blocks_global: 6
+n_blocks_local: 3
+n_clusters: 10
+n_downsample_E: 4
+n_downsample_global: 3
+n_local_enhancers: 1
+name: people
+nef: 16
+netG: global
+ngf: 64
+niter_fix_global: 0
+no_flip: False
+no_instance: False
+no_simswaplogo: False
+norm: batch
+norm_G: spectralspadesyncbatch3x3
+ntest: inf
+onnx: None
+output_nc: 3
+output_path: ./output/
+phase: test
+pic_a_path: G:/swap_data/ID/elon-musk-hero-image.jpeg
+pic_b_path: ./demo_file/multi_people.jpg
+pic_specific_path: ./crop_224/zrf.jpg
+resize_or_crop: scale_width
+results_dir: ./results/
+semantic_nc: 3
+serial_batches: False
+temp_path: ./temp_results
+tf_log: False
+use_dropout: False
+use_encoded_image: False
+use_mask: False
+verbose: False
+video_path: G:/swap_data/video/HSB_Demo_Trim.mp4
+which_epoch: latest
+-------------- End ----------------
+[ WARN:0@416.990] global loadsave.cpp:241 findDecoder imread_('./simswaplogo/simswaplogo.png'): can't open/read file: check file path/integrity
+Error occurred:
+Traceback (most recent call last):
+  File "/nvme0n1-disk/swapface/SimSwap/API.py", line 91, in process_pics
+    final_img = swap_multi(data.pic_b, data.source_path_list, data.target_path_list)
+  File "/nvme0n1-disk/swapface/SimSwap/SimSwapMultispecific.py", line 88, in swap_multi
+    logoclass = watermark_image('./simswaplogo/simswaplogo.png')
+  File "/nvme0n1-disk/swapface/SimSwap/util/add_watermark.py", line 26, in __init__
+    h,w,c = logo_image.shape
+AttributeError: 'NoneType' object has no attribute 'shape'
+INFO:     127.0.0.1:40136 - "POST /process_image_mul HTTP/1.1" 200 OK

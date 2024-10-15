@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #container {
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+<button id="upload-button">上传掩码</button>
+
+<script src="js/konva.min.js"></script>
+<script>
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i=0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(nameEQ) === 0) {
+                return c.substring(nameEQ.length, c.length);
+            }
+        }
+        return null;
+    }
+
+    // 获取 URL 参数中的文件名和 room_id
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = getCookie("uuid");
+    const fileName = urlParams.get('file_name');
+
+    if (!fileName) {
+        alert('未提供图片文件名或房间ID');
+        throw new Error('未提供图片文件名或房间ID');
+    }
+
+    // 拼接相对路径来加载图片
+    const fullImageUrl = `/uploads/${roomId}/${fileName}`;
+
+    Konva.Image.fromURL(fullImageUrl, function(image) {
+        const container = document.getElementById('container');
+
+        // 设置容器的大小
+        container.style.width = image.width() + 'px';
+        container.style.height = image.height() + 'px';
+
+        const stage = new Konva.Stage({
+            container: 'container',
+            width: image.width(),
+            height: image.height(),
+        });
+
+        const layer = new Konva.Layer();
+        stage.add(layer);
+
+        // 添加背景图片
+        layer.add(image);
+        layer.draw();
+
+        let isDrawing = false;
+        let lastLine;
+
+        stage.on('mousedown touchstart', function () {
+            isDrawing = true;
+            const pos = stage.getPointerPosition();
+            lastLine = new Konva.Line({
+                stroke: 'red',
+                strokeWidth: 5,
+                globalCompositeOperation: 'source-over',
+                points: [pos.x, pos.y],
+            });
+            layer.add(lastLine);
+        });
+
+        stage.on('mousemove touchmove', function () {
+            if (!isDrawing) return;
+            const pos = stage.getPointerPosition();
+            const newPoints = lastLine.points().concat([pos.x, pos.y]);
+            lastLine.points(newPoints);
+            layer.batchDraw();
+        });
+
+        stage.on('mouseup touchend', function () {
+            isDrawing = false;
+        });
+
+        // 上传按钮点击事件
+        document.getElementById('upload-button').addEventListener('click', function () {
+            // 收集所有绘制的线条的坐标数据
+            const linesData = layer.getChildren().filter(shape => shape instanceof Konva.Line).map(line => {
+                return {
+                    points: line.points(),
+                    strokeWidth: line.strokeWidth()
+                };
+            });
+
+            if (linesData.length === 0) {
+                alert('没有绘制的线条');
+                return;
+            }
+            // 获取画布的宽度和高度
+            const imgWidth = stage.width();
+            const imgHeight = stage.height();
+
+            // 将坐标数据和其他信息发送到服务器
+            const formData = new FormData();
+            formData.append('lines', JSON.stringify(linesData));
+            formData.append('room_id', roomId || 'default_room');
+            formData.append('file_name', fileName || 'mask.bin');
+            formData.append('img_width', imgWidth);
+            formData.append('img_height', imgHeight);
+            fetch('/api/uploads/line-coordinates', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('上传成功:', data);
+            })
+            .catch(error => {
+                console.error('上传失败:', error);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

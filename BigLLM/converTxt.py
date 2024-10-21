@@ -1,0 +1,46 @@
+import chardet
+
+
+def detect_file_encoding(file_path):
+    """检测文件编码"""
+    with open(file_path, 'rb') as f:
+        raw_data = f.read()
+        result = chardet.detect(raw_data)
+        encoding = result['encoding']
+        confidence = result['confidence']
+        print(f"检测到的编码: {encoding}, 置信度: {confidence}")
+        return encoding
+
+
+def convert_to_utf8(input_file, output_file, error_log):
+    """将文件编码转换为 UTF-8，并处理错误"""
+    try:
+        # 检测文件编码
+        encoding = detect_file_encoding(input_file)
+        if encoding is None:
+            raise ValueError(f"无法检测到编码，请手动检查文件: {input_file}")
+
+        # 使用检测到的编码读取文件，并忽略/替换无法解码的字符
+        with open(input_file, 'r', encoding=encoding, errors='replace') as f:
+            content = f.read()
+
+        # 保存为 UTF-8 编码的新文件
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+        print(f"文件已成功转换为 UTF-8 编码，并保存到 {output_file}")
+
+    except Exception as e:
+        # 处理所有其他异常
+        print(f"文件 {input_file} 转换时出现错误: {e}")
+        with open(error_log, 'a', encoding='utf-8') as log:
+            log.write(f"文件 {input_file} 转换失败: {str(e)}\n")
+
+
+# 示例：将文件转换为 UTF-8 并记录错误
+input_file = '/Users/dean/Downloads/bigllm.txt'  # 原始 .txt 文件
+output_file = 'bigllm_utf8.txt'  # 转换后的 UTF-8 文件
+error_log = 'error_log.txt'  # 错误日志文件
+
+# 调用转换函数
+convert_to_utf8(input_file, output_file, error_log)

@@ -1,0 +1,1 @@
+文件 /Users/dean/Downloads/bigllm.txt 转换失败: 'gb2312' codec can't decode byte 0x86 in position 26720: illegal multibyte sequence

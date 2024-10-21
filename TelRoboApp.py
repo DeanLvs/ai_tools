@@ -281,18 +281,20 @@ async def handle_photo(update: Update, context) -> None:
     if user_info.channel == 'dress_up':
         logger.info(f'answer it is {filename}')
         await update.message.reply_text(text=f"开始处理图片: {filename}")
-        data = {'filename': '',
-                'prompt': 'nude,person,woman,the front of body,authenticity,natural asses,natural boobs',
-                'reverse_prompt': 'finger,wrist,hazy,malformed,warped,hand,multiple belly buttons,multiple breasts,multiple nipples,deformed limbs,disconnected limbs,contorted position,elongated waists,overly exaggerated body parts,body incorrect proportions',
-                'prompt_2': '', 'reverse_prompt_2': '', 'num_inference_steps': '30', 'guidance_scale': '7',
-                'seed': '128', 're_p': "['key_points','depth','canny']", 're_b': '[0.5, 0.2, 0.5, 0.5]',
-                'ha_p': '0',
-                'ga_b': '0.09', 're_mask': 'F', 'strength': '0.8543', 'def_skin': '2', 'roomId': '',
-                'notify_type': 'tel'}
+        data = {'def_skin': 'inpaint'}
+        data['prompt'] = 'nude,person,woman,the front of body,authenticity,natural asses,natural boobs'
+        data['reverse_prompt'] = 'finger,wrist,hazy,malformed,warped,hand,multiple belly buttons,multiple breasts,multiple nipples,deformed limbs,disconnected limbs,contorted position,elongated waists,overly exaggerated body parts,body incorrect proportions'
+        data['num_inference_steps'] = '30'
+        data['guidance_scale'] = '7'
+        data['seed'] = '128'
+        data['strength'] = '0.8543'
+        data['ha_p'] = '0'
+        data['ga_b'] = '0.09'
+        data['re_p'] = "['key_points','depth','canny']"
+        data['re_b'] = "[0.5, 0.2, 0.5, 0.5]"
         data['notify_type'] = 'tel'
         data['filename'] = filename
         data['roomId'] = room_id
-        data['def_skin'] = 'inpaint'
         logger.info(f'get req is {data}')
         room_image_manager = RoomImageManager()
         add_task_list(data, 'tel_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
@@ -512,9 +514,12 @@ async def handle_message(update: Update, context) -> None:
                     'reverse_prompt': ''}
             data['notify_type'] = 'tel'
             data['filename'] = filename
+            data['face_filename'] = ''
             data['roomId'] = room_id
             if 'flux_txt_to_image' == user_info.channel:
                 data['gen_type'] = 'flux'
+            else:
+                data['gen_type'] = ''
             logger.info(f'get req is {data}')
             # 创建实例
             room_image_manager = RoomImageManager()

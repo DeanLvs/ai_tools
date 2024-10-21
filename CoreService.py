@@ -917,7 +917,6 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
     num_inference_steps = processed_data['num_inference_steps']
     guidance_scale = processed_data['guidance_scale']
     seed = processed_data['seed']
-    re_mask = processed_data['re_mask']
     file_path = os.path.join(app_path, room_id, filename)
     # Generate a unique key for the input combination
     unique_key = generate_unique_key(room_id, filename, prompt, reverse_prompt, num_inference_steps, guidance_scale, seed, re_p_float_array, re_b_float_array, ha_p, ga_b, strength,prompt_2, reverse_prompt_2)
@@ -940,11 +939,10 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
     if seed > -2:
         torch.manual_seed(seed)
     f_output_line_image_pil = None
-    if re_mask == 'F':
-        logger.info(f"filled_image_pil_filename: {gen_save_path.filled_image_pil_filename} ")
-        notify_fuc(notify_type, 'processing_step_progress', {'text': 'book yes 识别图片...'},to=room_id)
-        room_upload_folder = room_path(room_id, app_path)
-        mask_future, gen_fix_pic_future, fill_all_mask_future = re_auto_mask_with_out_head_b(room_upload_folder, filename, True)
+    logger.info(f"filled_image_pil_filename: {gen_save_path.filled_image_pil_filename} ")
+    notify_fuc(notify_type, 'processing_step_progress', {'text': 'book yes 识别图片...'},to=room_id)
+    room_upload_folder = room_path(room_id, app_path)
+    mask_future, gen_fix_pic_future, fill_all_mask_future = re_auto_mask_with_out_head_b(room_upload_folder, filename, True)
 
     if os.path.exists(gen_save_path.line_file_name_path):
         logger.info(f'open {gen_save_path.line_file_name_path} use it line page')
@@ -1104,45 +1102,32 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
 
 def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, create_callback):
     # 处理并提取图片数据
-    processed_data = process_req_data(data)
-    notify_type = processed_data['notify_type']
-    room_id = processed_data['roomId']
-    def_skin = processed_data['def_skin']
+    notify_type = data['notify_type']
+    room_id = data['roomId']
+    def_skin = data['def_skin']
     notify_fuc(notify_type, 'processing_step_progress', {'text': '到你了亲，开始处理...'}, to=room_id)
 
     if def_skin == '99':
+        processed_data = process_req_data(data)
         i2v_video_name = i2v_processing(processed_data, app_path)
         room_image_manager.insert_imgStr(room_id, f'{i2v_video_name}', 'done', 'book', notify_fuc=notify_fuc, notify_type=notify_type)
         notify_fuc(notify_type, 'processing_step_fin', {'fin': 'f'}, to=room_id)
         return
-    # 从处理后的数据中提取值
-    filename = processed_data['filename']
-    prompt = processed_data['prompt']
-    prompt_2 = processed_data['prompt_2']
-    re_p_float_array = processed_data['re_p_float_array']
-    re_b_float_array = processed_data['re_b_float_array']
-    ha_p = processed_data['ha_p']
-    ga_b = processed_data['ga_b']
-    reverse_prompt = processed_data['reverse_prompt']
-    reverse_prompt_2 = processed_data['reverse_prompt_2']
-    strength = processed_data['strength']
-    num_inference_steps = processed_data['num_inference_steps']
-    guidance_scale = processed_data['guidance_scale']
-    seed = processed_data['seed']
-    file_path = os.path.join(app_path, room_id, filename)
-    # Generate a unique key for the input combination
-    unique_key = generate_unique_key(room_id, filename, prompt, reverse_prompt, num_inference_steps, guidance_scale, seed, re_p_float_array, re_b_float_array, ha_p, ga_b, strength,prompt_2, reverse_prompt_2)
-
-    logger.info(f"unique_key: {unique_key}")
-
+    # 情景
     if def_skin == '909':
-        face_filename = processed_data['face_filename']
+        prompt = data['prompt']
+        filename = data['filename']
+        face_filename = data['face_filename']
+        gen_type = data['gen_type']
+        file_path = os.path.join(app_path, room_id, filename)
+        unique_key = generate_unique_key(room_id, filename, prompt, face_filename, gen_type)
+        logger.info(f"unique_key: {unique_key}")
         if face_filename is not None and face_filename != '':
             face_filename = get_hold_path(room_id, face_filename, app_path)
         logger.info(f'chose face_filename is {face_filename}')
         en_prompt= translate_baidu(prompt)
         # 1006 flux ip
-        text_gen_img_s_t = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=processed_data['gen_type'], port=1006)
+        text_gen_img_s_t = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, port=1006)
         for idx, text_gen_img in enumerate(text_gen_img_s_t):
             file_txt_name = f'p_flux_{idx}_{unique_key}.png'
             logger.info(f"Image {idx} saved to {file_txt_name}")
@@ -1151,7 +1136,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                                          file_p = file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
                                          notify_type=notify_type)
 
-        text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=processed_data['gen_type'])
+        text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type)
         for idx, text_gen_img in enumerate(text_gen_img_s):
             file_txt_name = f'p_txt_{idx}_{unique_key}.png'
             logger.info(f"Image {idx} saved to {file_txt_name}")
@@ -1162,8 +1147,10 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
         notify_fuc(notify_type, 'processing_step_progress',
                    {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id, keyList=get_rest_key())
         return
+    # filename
     if def_skin == 'face':
-        filename = processed_data['filename']
+        filename = data['filename']
+        file_path = os.path.join(app_path, room_id, filename)
         face_images = req_get_face(file_path)
         for idx, face_gen_img in enumerate(face_images):
             new_unique_id = str(uuid.uuid4())
@@ -1178,14 +1165,14 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
             ]
             reply_face_markup = InlineKeyboardMarkup(keyboard_face)
             room_image_manager.insert_imgStr(room_id, f'{file_face_name}', 'done','生成图', file_i = face_gen_img,
-                                         file_p = file_face_name_path, ext_info=prompt, notify_fuc=notify_fuc,
+                                         file_p = file_face_name_path, ext_info='huanlian', notify_fuc=notify_fuc,
                                          notify_type=notify_type,keyList=reply_face_markup)
         return
+    # filename org_faces to_faces
     if def_skin == 'start_swap_face':
-        filename = processed_data['filename']
-        org_faces = processed_data['org_faces']
-        to_faces = processed_data['to_faces']
-
+        filename = data['filename']
+        org_faces = data['org_faces']
+        to_faces = data['to_faces']
         org_faces_f = []
         for s in org_faces:
             org_faces_f.append(get_fin_hold_path(room_id, s))
@@ -1206,7 +1193,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                 file_face_name = f'p_ref{i}_{filename}'
                 file_face_name_path = os.path.join(app_path, room_id, file_face_name)
                 room_image_manager.insert_imgStr(room_id, f'{file_face_name}', 'done', '换脸结果图', file_i=replace_result_img,
-                                                 file_p=file_face_name_path, ext_info=prompt, notify_fuc=notify_fuc,
+                                                 file_p=file_face_name_path, ext_info='huanlian', notify_fuc=notify_fuc,
                                                  notify_type=notify_type)
             else:
                 notify_fuc(notify_type, 'processing_step_progress',
@@ -1218,10 +1205,11 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                    {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id,
                    keyList=get_rest_key())
         return
+    # filename org_faces to_faces
     if def_skin == 'start_swap_face_video':
-        filename = processed_data['filename']
-        org_faces = processed_data['org_faces']
-        to_faces = processed_data['to_faces']
+        filename = data['filename']
+        org_faces = data['org_faces']
+        to_faces = data['to_faces']
 
         org_faces_f = []
         for s in org_faces:
@@ -1232,10 +1220,9 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
         video_by_name(room_id, filename, 1005, org_faces_f, to_faces_f, notify_fuc, notify_type)
         video_by_name(room_id, filename, 5000, org_faces_f, to_faces_f, notify_fuc, notify_type)
         return
-
-
+    # pre_face_pic_list
     if def_skin == 'swap_face':
-        pre_face_pic_list = processed_data['pre_face_pic_list']
+        pre_face_pic_list = data['pre_face_pic_list']
         total_faces = []
         for per_sinle_face_pic in pre_face_pic_list:
             face_pat = get_hold_path(room_id, per_sinle_face_pic, app_path)

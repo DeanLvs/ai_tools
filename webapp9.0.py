@@ -332,6 +332,7 @@ def queue_consumer():
         if task_data is None:
             break
         try:
+            logger.info(f'run it {task_data}')
             handle_image_processing_b(task_data, notify_fuc, app_path, room_image_manager, create_callback)
             user_info = query_or_def(User(user_id))
             user_vip_control(user_info, -1)

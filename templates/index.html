@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <title>BOOK YES[仅供学术研究使用]</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <link rel="stylesheet" href="/css/styles.css">
-    <script src="js/g_core.js"></script>
+    <link rel="stylesheet" href="/css/d_styles.css">
+    <script src="js/n_core.js"></script>
     <style> .btcpay-form { display: inline-flex; align-items: center; justify-content: center; } .btcpay-form--inline { flex-direction: row; } .btcpay-form--block { flex-direction: column; } .btcpay-form--inline .submit { margin-left: 15px; } .btcpay-form--block select { margin-bottom: 10px; } .btcpay-form .btcpay-custom-container{ text-align: center; }.btcpay-custom { display: flex; align-items: center; justify-content: center; } .btcpay-form .plus-minus { cursor:pointer; font-size:25px; line-height: 25px; background: #DFE0E1; height: 30px; width: 45px; border:none; border-radius: 60px; margin: auto 5px; display: inline-flex; justify-content: center; } .btcpay-form select { -moz-appearance: none; -webkit-appearance: none; appearance: none; color: currentColor; background: transparent; border:1px solid transparent; display: block; padding: 1px; margin-left: auto; margin-right: auto; font-size: 11px; cursor: pointer; } .btcpay-form select:hover { border-color: #ccc; } .btcpay-form option { color: #000; background: rgba(0,0,0,.1); } .btcpay-input-price { -moz-appearance: textfield; border: none; box-shadow: none; text-align: center; font-size: 25px; margin: auto; border-radius: 5px; line-height: 35px; background: #fff; }.btcpay-input-price::-webkit-outer-spin-button, .btcpay-input-price::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } </style>
     <style>
     .update-notice {
@@ -30,24 +30,22 @@
 <body>
 <header>BOOK YES[仅供学术研究使用]</header>
 <main>
-    <div class="left-panel">
-        <div class="section">
-            <img id="uploadedImage" alt="点击选择文件，即可上传，超过2048的图片会被压缩采样处理，望各位理解">
-        </div>
-        <p id="progress" class="progress"></p>
-    </div>
     <div id="updateNotice" class="update-notice">
 <!--        重要更新: BOOK YES v7.0 现已上线！<br>新的功能、更好的体验！点击<a href="release_notes.html" target="_blank">这里</a>查看更新内容。-->
-        7.0优化了换衣时被遮盖区域的肢体的比例 位置推断
-        <br>机器成本问题 多人请求会有排队逻辑 先来后到
-        <br>会依次生成4张图 一般第4张效果最好
-        <br>生成列表内图 点击会放大 后右上角[动起来]可体验视频生成
+        先选择文件上传再从生成列表中选择你要处理的图片
+        <br>8.0持续优化了换衣时被遮盖区域的肢体的比例 位置推断
+        <br>bookyes自定义情景 可以保留选择图人物特征进行重绘
+        <br>目前其进度回调还未开发完成，所以
+        <br>点击 bookyes自定义情景 后需要多等一下会依次生成7张图
     </div>
     <div class="right-panel">
         <div class="section">
             <input type="file" id="fileInput">
-            <button id="processImageButton_b" onclick="processImage_b()">选完图片点我bookyes 7.0</button>
+            <button id="processImageButton_b" onclick="processImage_b()">选完图片点我bookyes 8.0</button>
             <button id="regenerateButton_b" style="display: none;" onclick="regenerateImage_b()">不满意可以点我重新book图像</button>
+            <div class="file-input-container">
+                <button id="openModalButton" onclick="showModal()">点我bookyes自定义情景</button>
+            </div>
             <div class="file-input-container">
                 <label for="fileInput_handler_face" class="custom-file-label">先选择脸图</label>
                 <input type="file" id="fileInput_handler_face" style="display: none;">
@@ -112,6 +110,21 @@
     <img id="fullscreenImage" alt="全屏图片">
     <input type="hidden" id="v_filename">
     <button class="fullscreen-close-button" onclick="processImage_v()">动起来</button>
+</div>
+<!-- 悬浮框 -->
+<div id="myModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <p>请输入内容：</p>
+        <!-- 提示信息 -->
+        <p class="modal-hint">请输入一些文本信息，然后点击确定或取消</p>
+        <!-- 调整后的输入框 -->
+        <input type="text" id="userInput" placeholder="在这里输入..." class="modal-input">
+        <!-- 确定和取消按钮 -->
+        <div class="modal-buttons">
+            <button id="confirmButton" onclick="confirmInput()">生成</button>
+            <button id="cancelButton" onclick="closeModal()">取消</button>
+        </div>
+    </div>
 </div>
 <script src="js/ze_end.js"></script>
 <!--<script>-->

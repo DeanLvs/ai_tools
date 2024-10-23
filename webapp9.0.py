@@ -65,6 +65,9 @@ def upload_file():
         shutil.copy(file_path, backup_path)
         # 调整图像大小
         filename = resize_image(file_path)
+        room_image_manager.insert_imgStr(room_id, f'{filename}', 'done',
+                                         '原图', ext_info='', notify_fuc=notify_it,
+                                         notify_type='ws')
         return jsonify({'filename': filename, 'file_url': f'{filename}'})
 
 @socketio.on('join_room')
@@ -311,6 +314,61 @@ def add_image_processing_task(data):
     room_image_manager = RoomImageManager()
     user_info = query_or_def(User(roomId, roomId))
     add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
+
+@socketio.on('process_text_gen_pic')
+def process_text_gen_pic(data):
+    roomId = data['roomId']
+    data['roomId'] = roomId
+    data['notify_type'] = 'ws'
+    data['def_skin'] = '909'
+    prompt = data['prompt']
+    reverse_prompt = data['reverse_prompt']
+    face_filename = data['face_filename']
+    filename = data['filename']
+    gen_type = data['gen_type'] # 'flux' 或 ''
+    logger.info(f'get req is {data}')
+    room_image_manager = RoomImageManager()
+    user_info = query_or_def(User(roomId, roomId))
+    add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
+
+@socketio.on('process_pic_find_face')
+def process_pic_find_face(data):
+    roomId = data['roomId']
+    data['notify_type'] = 'ws'
+    data['def_skin'] = 'swap_face'
+    pre_face_pic_list = data['pre_face_pic_list']
+    logger.info(f'get req is {data}')
+    room_image_manager = RoomImageManager()
+    user_info = query_or_def(User(roomId, roomId))
+    add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
+
+@socketio.on('process_pic_swap_face')
+def process_pic_swap_face(data):
+    roomId = data['roomId']
+    org_faces = data['org_faces']
+    to_faces = data['to_faces']
+    filename = data['filename']
+    data['notify_type'] = 'ws'
+    data['def_skin'] = 'start_swap_face'
+    logger.info(f'get req is {data}')
+    room_image_manager = RoomImageManager()
+    user_info = query_or_def(User(roomId, roomId))
+    add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
+
+@socketio.on('process_video_swap_face')
+def process_video_swap_face(data):
+    roomId = data['roomId']
+    data['notify_type'] = 'ws'
+    data['def_skin'] = 'start_swap_face_video'
+    filename = data['filename']
+    org_faces = data['org_faces']
+    to_faces = data['to_faces']
+    logger.info(f'get req is {data}')
+    room_image_manager = RoomImageManager()
+    user_info = query_or_def(User(roomId, roomId))
+    add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
+
+
 # 同步更新 task_positions 中任务的队列位置
 
 def update_task_positions(finished_room_id, task_positions):

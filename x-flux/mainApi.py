@@ -38,14 +38,14 @@ class FluxArguments:
         self.image = None
         self.lora_weight = 0.9
         self.control_weight = 0.8
-        self.control_type = "canny"
+        self.control_type = None
         self.model_type = "flux-dev"
         self.width = 1024
         self.height = 1024
         self.num_steps = 25
         self.guidance = 4
         self.seed = 123456789
-        self.true_gs = 2
+        self.true_gs = 4.5
         self.timestep_to_start_cfg = 5
         self.save_path = "results"
 

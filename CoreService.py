@@ -1126,6 +1126,16 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
             face_filename = get_hold_path(room_id, face_filename, app_path)
         logger.info(f'chose face_filename is {face_filename}')
         en_prompt= translate_baidu(prompt)
+
+        text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type)
+        for idx, text_gen_img in enumerate(text_gen_img_s):
+            file_txt_name = f'p_txt_{idx}_{unique_key}.png'
+            logger.info(f"Image {idx} saved to {file_txt_name}")
+            file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
+            room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'done', '生成图', file_i=text_gen_img,
+                                             file_p=file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
+                                             notify_type=notify_type)
+
         # 1006 flux ip
         text_gen_img_s_t = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, port=1006)
         for idx, text_gen_img in enumerate(text_gen_img_s_t):
@@ -1136,14 +1146,6 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                                          file_p = file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
                                          notify_type=notify_type)
 
-        text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type)
-        for idx, text_gen_img in enumerate(text_gen_img_s):
-            file_txt_name = f'p_txt_{idx}_{unique_key}.png'
-            logger.info(f"Image {idx} saved to {file_txt_name}")
-            file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
-            room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'done','生成图', file_i = text_gen_img,
-                                         file_p = file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
-                                         notify_type=notify_type)
         notify_fuc(notify_type, 'processing_step_progress',
                    {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id, keyList=get_rest_key())
         return

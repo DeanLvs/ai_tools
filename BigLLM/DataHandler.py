@@ -122,52 +122,5 @@ output_folder = './processed_data'  # 处理后保存 JSON 文件的文件夹
 # 处理所有 .txt 文件
 process_all_txt_files(input_folder, output_folder)
 
-import json
-import os
-from sklearn.model_selection import train_test_split
 
-
-# 保存数据为 JSON 文件
-def save_as_json(data, output_path):
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-
-# 从处理后的数据中随机划分训练集和验证集
-def split_train_val_data(input_file, train_output, val_output, test_size=0.2):
-    # 读取已处理的 JSON 数据
-    with open(input_file, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    # 使用 sklearn 的 train_test_split 随机划分数据
-    train_data, val_data = train_test_split(data, test_size=test_size, random_state=42)
-
-    # 保存训练集和验证集
-    save_as_json(train_data, train_output)
-    save_as_json(val_data, val_output)
-
-    print(f"训练集已保存到 {train_output}，验证集已保存到 {val_output}")
-
-
-# 主函数：处理文件夹中的所有 .json 文件，生成训练集和验证集
-def process_and_split_all_json_files(input_folder, output_folder, test_size=0.2):
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    for file_name in os.listdir(input_folder):
-        if file_name.endswith('.json'):
-            file_path = os.path.join(input_folder, file_name)
-            train_output = os.path.join(output_folder, f"{os.path.splitext(file_name)[0]}_train.json")
-            val_output = os.path.join(output_folder, f"{os.path.splitext(file_name)[0]}_val.json")
-
-            # 调用函数，随机划分并保存训练集和验证集
-            split_train_val_data(file_path, train_output, val_output, test_size)
-
-
-# 示例：处理文件夹中的所有 .json 文件，并保存为训练集和验证集
-input_folder = './processed_data'  # 已处理 JSON 文件的文件夹
-output_folder = './split_data'  # 保存训练集和验证集的文件夹
-
-# 处理所有 .json 文件并进行数据集划分
-process_and_split_all_json_files(input_folder, output_folder)
 

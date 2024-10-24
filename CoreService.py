@@ -586,7 +586,7 @@ def req_replace_face(pic_b='', pic_save=None, source_path_list=None, target_path
     except Exception as e:
         logger.error(f"Error processing response: {e}")
         return None
-def req_text_gen(file_path, prompt, free_fast=True, only_face_path='',seed=2023, gen_type='', port=1060):
+def req_text_gen(file_path, prompt, free_fast=True, only_face_path='',seed=2023, gen_type='', port=1060, room_id=None):
     # 发起 HTTP POST 请求
     url = f"http://localhost:{port}/"
     data = {
@@ -594,7 +594,8 @@ def req_text_gen(file_path, prompt, free_fast=True, only_face_path='',seed=2023,
         'prompt': prompt,
         'only_file_path':only_face_path,
         'seed': seed,
-        'gen_type':gen_type
+        'gen_type':gen_type,
+        'room_id':room_id
     }
     response = requests.post(url+'inpaint', data=data)
     # 处理响应的图像
@@ -1127,7 +1128,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
         logger.info(f'chose face_filename is {face_filename}')
         en_prompt= translate_baidu(prompt)
 
-        text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type)
+        text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, room_id=room_id)
         for idx, text_gen_img in enumerate(text_gen_img_s):
             file_txt_name = f'p_txt_{idx}_{unique_key}.png'
             logger.info(f"Image {idx} saved to {file_txt_name}")
@@ -1137,7 +1138,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                                              notify_type=notify_type)
 
         # 1006 flux ip
-        text_gen_img_s_t = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, port=1006)
+        text_gen_img_s_t = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, port=1006, room_id=room_id)
         for idx, text_gen_img in enumerate(text_gen_img_s_t):
             file_txt_name = f'p_flux_{idx}_{unique_key}.png'
             logger.info(f"Image {idx} saved to {file_txt_name}")

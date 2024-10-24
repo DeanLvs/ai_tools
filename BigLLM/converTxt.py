@@ -1,3 +1,4 @@
+import os
 import chardet
 
 
@@ -37,10 +38,26 @@ def convert_to_utf8(input_file, output_file, error_log):
             log.write(f"文件 {input_file} 转换失败: {str(e)}\n")
 
 
-# 示例：将文件转换为 UTF-8 并记录错误
-input_file = '/Users/dean/Downloads/bigllm.txt'  # 原始 .txt 文件
-output_file = 'bigllm_utf8.txt'  # 转换后的 UTF-8 文件
+def process_directory(input_dir, output_dir, error_log):
+    """扫描目录下所有文件，转换为 UTF-8 编码并保存到新目录"""
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    file_counter = 1
+    for root, dirs, files in os.walk(input_dir):
+        for file_name in files:
+            input_file_path = os.path.join(root, file_name)
+            output_file_path = os.path.join(output_dir, f"{file_counter}.txt")
+
+            # 执行文件转换
+            convert_to_utf8(input_file_path, output_file_path, error_log)
+            file_counter += 1
+
+
+# 示例：处理目录中的所有文件
+input_dir = './OrgFilm'  # 输入目录路径
+output_dir = './transData'  # 输出目录路径
 error_log = 'error_log.txt'  # 错误日志文件
 
-# 调用转换函数
-convert_to_utf8(input_file, output_file, error_log)
+# 调用函数处理目录
+process_directory(input_dir, output_dir, error_log)

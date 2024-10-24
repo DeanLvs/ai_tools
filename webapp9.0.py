@@ -273,6 +273,18 @@ def process_replace_image_b(data):
     logger.info(f'suc save it {re_fina}')
     room_image_manager.insert_imgStr(room_id, f'{re_fina}', 'done', 'book', notify_fuc=notify_it, notify_type=notify_type)
     notify_it(notify_type, 'processing_step_fin', {'fin': 'f'}, to=room_id)
+# 定义 /inpaint 路由，用于接收 POST 请求
+
+@app.route('/gencallback', methods=['POST'])
+def inpaint():
+    # 从请求中获取数据
+    progress = request.form.get('progress')
+    had = request.form.get('had')
+    room_id = request.form.get('room_id')
+    notify_it('ws', 'processing_progress', {'progress': progress, 'had': had}, to=room_id)
+    # 返回响应
+    return jsonify({'status': 'success', 'message': 'Data received successfully'})
+
 
 @app.route('/api/rep_upload_face', methods=['POST'])
 def rep_upload_face():

@@ -1,12 +1,12 @@
 PRE_SEQ_LEN=128
-LR=1e-2
+LR=5e-5
 NUM_GPUS=1
 
-torchrun --standalone --nnodes=1 --nproc-per-node=$NUM_GPUS main.py \
+nohup torchrun --standalone --nnodes=1 --nproc-per-node=$NUM_GPUS main.py \
     --do_train \
-    --train_file $CHAT_TRAIN_DATA \
-    --validation_file $CHAT_VAL_DATA \
-    --preprocessing_num_workers 10 \
+    --train_file /nvme0n1-disk/bigLLM/merged_train_t.json \
+    --validation_file /nvme0n1-disk/bigLLM/merged_val_t.json \
+    --preprocessing_num_workers 64 \
     --prompt_column prompt \
     --response_column response \
     --history_column history \
@@ -14,16 +14,17 @@ torchrun --standalone --nnodes=1 --nproc-per-node=$NUM_GPUS main.py \
     --model_name_or_path /nvme0n1-disk/bigLLM/chatglm2-6b \
     --output_dir /nvme0n1-disk/bigLLM/chatglm2/checkpoint \
     --overwrite_output_dir \
-    --max_source_length 256 \
-    --max_target_length 256 \
-    --per_device_train_batch_size 1 \
-    --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 16 \
+    --max_source_length 384 \
+    --max_target_length 384 \
+    --per_device_train_batch_size 16 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 1 \
     --predict_with_generate \
     --max_steps 3000 \
     --logging_steps 10 \
     --save_steps 1000 \
     --learning_rate $LR \
     --pre_seq_len $PRE_SEQ_LEN \
-    --quantization_bit 4
+    --fp16 \
+    &
 

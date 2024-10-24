@@ -483,6 +483,32 @@ from insightface.utils import face_align
 from ip_adapter import IPAdapterPlusXL
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDXL, IPAdapterFaceIDPlusXL, IPAdapterFaceID
 
+def req_text_gen(progress, had, room_id, port=5003):
+    # 发起 HTTP POST 请求
+    url = f"http://localhost:{port}/"
+    data = {
+        'progress': progress,
+        'had': had,
+        'room_id':room_id
+    }
+    try:
+        response = requests.post(url+'gencallback', data=data)
+    except Exception as e:
+        logger.error(f"Error processing response: {e}")
+
+def call_main_service(progress, had, room_id):
+    logger.info(f'call back {progress} {had} {room_id}')
+    req_text_gen(progress, had, room_id)
+    return
+def progress_callback(step, t, latents, had, room_id, num_inference_steps):
+    progress = int((step / num_inference_steps) * 100)
+    call_main_service(progress, had, room_id)
+
+# 定义回调函数并传递 'had' 参数
+def create_callback(had_value, room_id, num_inference_steps):
+    return lambda step, t, latents: progress_callback(step, t, latents, had_value, room_id, num_inference_steps)
+
+
 def center_image_on_black_background(image, target_size=(640, 640)):
     """
     如果图像小于指定大小，则将其放在纯黑色背景的中心。
@@ -542,7 +568,7 @@ def ip_sdxl(face_pic_path="", prompt="", negative_prompt="monochrome, lowres, ba
     # 触发垃圾回收，释放未使用的内存
     gc.collect()
     return images
-def ip_sdxl_plus_v1(face_pic_path="", prompt="", negative_prompt="monochrome, lowres, bad anatomy, worst quality, low quality, blurry", seed=2023, only_face_pic_path=""):
+def ip_sdxl_plus_v1(face_pic_path="", prompt="", negative_prompt="monochrome, lowres, bad anatomy, worst quality, low quality, blurry", seed=2023, only_face_pic_path="", room_id=None):
     if only_face_pic_path is not None and only_face_pic_path != '':
         face_pic_path = only_face_pic_path
         image = cv2.imread(face_pic_path)
@@ -570,6 +596,7 @@ def ip_sdxl_plus_v1(face_pic_path="", prompt="", negative_prompt="monochrome, lo
 
     logger.info(f'gen it prompt: {prompt} negative_prompt: {negative_prompt}')
     images = ip_model.generate(pil_image=face_pil_image, num_samples=4, num_inference_steps=30, seed=seed,
+                               callback=create_callback('3/7', room_id, 30),callback_steps=1,
                                prompt=prompt, negative_prompt=negative_prompt)
     del ip_model
     # 释放 GPU 缓存
@@ -578,7 +605,7 @@ def ip_sdxl_plus_v1(face_pic_path="", prompt="", negative_prompt="monochrome, lo
     gc.collect()
     return images
 
-def ip_sdxl_plus_v2(face_pic_path="", prompt="", negative_prompt="monochrome, lowres, bad anatomy, worst quality, low quality, blurry", seed=2023, only_face_pic_path=""):
+def ip_sdxl_plus_v2(face_pic_path="", prompt="", negative_prompt="monochrome, lowres, bad anatomy, worst quality, low quality, blurry", seed=2023, only_face_pic_path="", room_id=None):
     if only_face_pic_path is not None and only_face_pic_path != '':
         face_pic_path = only_face_pic_path
         image = cv2.imread(face_pic_path)
@@ -609,7 +636,7 @@ def ip_sdxl_plus_v2(face_pic_path="", prompt="", negative_prompt="monochrome, lo
     logger.info(f'gen it prompt: {prompt} negative_prompt: {negative_prompt}')
     images = ip_model.generate(
         prompt=prompt, negative_prompt=negative_prompt, face_image=face_image, faceid_embeds=faceid_embeds,
-        s_scale=1.0,scale=1.0,
+        s_scale=1.0,scale=1.0, callback=create_callback('1/7', room_id, 60),callback_steps=2,
         num_samples=2 , width=1024, height=1024, num_inference_steps=60, seed=seed
     )
     del ip_model
@@ -815,18 +842,19 @@ async def inpaint(
     file_path: str = Form(...),  # 从表单接收文件路径
     prompt: str = Form(...),  # 从表单接收 prompt 字符串
     seed: int = Form(...),
+    room_id: Optional[str] = Form(None),
     gen_type: Optional[str] = Form(None),
     only_file_path: Optional[str] = Form(None)
 ):
     try:
-        logger.info(f'text gen en_prompt {prompt} -----{file_path}-----------{gen_type}--')
+        logger.info(f'text gen en_prompt {prompt} -----{file_path}-----------{gen_type}--room_id {room_id}')
         total_pic = []
         if gen_type is None or gen_type == '':
-            images_v2 = ip_sdxl_plus_v2(face_pic_path = file_path, prompt=prompt, seed=seed, only_face_pic_path= only_file_path)
+            images_v2 = ip_sdxl_plus_v2(face_pic_path = file_path, prompt=prompt, seed=seed, only_face_pic_path= only_file_path, room_id=room_id)
             total_pic.extend(images_v2)
             # images_v0 = ip_sdxl(face_pic_path = file_path, prompt=en_prompt)
             # total_pic.extend(images_v0)
-            images_v1 = ip_sdxl_plus_v1(face_pic_path = file_path, prompt=prompt, seed=seed, only_face_pic_path= only_file_path)
+            images_v1 = ip_sdxl_plus_v1(face_pic_path = file_path, prompt=prompt, seed=seed, only_face_pic_path= only_file_path, room_id=room_id)
             total_pic.extend(images_v1)
         else:
             images_flux = gen_img_canny_control_with_face(file_path, prompt)

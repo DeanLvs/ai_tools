@@ -280,7 +280,7 @@ async def handle_photo(update: Update, context) -> None:
     logger.info(f'now user {user_id} in {user_info.channel}')
     if (user_info.channel == 'dress_up' or user_info.channel == 'special_effects'
             or user_info.channel == 'flux_txt_to_image' or 'swap_video' == user_info.channel):
-        await update.message.reply_text(f'服务暂停，机器算力正在训练新模型，敬请期待')
+        await update.message.reply_text(f'除图片换脸外，其他服务暂停，机器算力正在训练新模型，敬请期待')
         return
     if user_info.channel == 'dress_up':
         logger.info(f'answer it is {filename}')

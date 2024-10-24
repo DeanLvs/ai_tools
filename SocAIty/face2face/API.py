@@ -34,7 +34,7 @@ async def restart_program():
     """Restarts the current program by executing the shell script."""
     print("Restarting program...")
     # 指定你的 .sh 脚本的路径
-    shell_script_path = "/nvme0n1-disk/SocAIty/face2face/start.sh"  # 修改为你的 .sh 脚本的路径
+    shell_script_path = "/nvme0n1-disk/ai_tools/SocAIty/face2face/start.sh"  # 修改为你的 .sh 脚本的路径
     # 使用 os.execv 来执行 .sh 脚本，替换当前进程
     os.execv("/bin/bash", ["bash", shell_script_path])
 

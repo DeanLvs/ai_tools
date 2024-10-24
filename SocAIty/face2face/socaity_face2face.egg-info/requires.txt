@@ -1,0 +1,5 @@
+insightface==0.7.3
+media-toolkit[VideoFile]>=0.1.1
+
+[full]
+fast-task-api[full]==0.0.6.dev7

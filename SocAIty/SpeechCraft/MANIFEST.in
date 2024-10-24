@@ -1,0 +1,2 @@
+recursive-include speechcraft/assets/prompts *.npz
+recursive-include speechcraft/assets/prompts/v2 *.npz

@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SpeechCraft"
+version = "0.0.2"
+description = "Create natural sounding audio from text, clone voices and use them. Convert voice to voice. Bark model."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "SocAIty" }
+]
+# Apache 2.0
+license = {file = "LICENSE"}
+
+dependencies = [
+    "media-toolkit[AudioFile]>=0.0.3",
+    "encodec",
+    "fairseq",
+    "boto3",
+    "funcy",
+    "huggingface-hub>=0.14.1",
+    "numpy",
+    "scipy",
+    "tokenizers",
+    "torch",
+    "torchaudio",
+    "tqdm",
+    "transformers"
+]
+
+[project.urls]
+source = "https://github.com/SocAIty/SpeechCraft"
+
+[project.optional-dependencies]
+full = [
+    "fastapi",
+    "fast-task-api>=0.0.3"
+]
+
+[tool.setuptools.package-data]
+speakers = ["assets/prompts/*.npz", "assets/prompts/v2/*.npz"]
+
+
+[tool.black]
+line-length = 100

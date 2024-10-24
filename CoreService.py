@@ -1190,6 +1190,9 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
         replace_result_img_1005 = req_replace_face(pic_b=filename_replace_p, source_path_list=org_faces_f,
                                                    target_path_list=to_faces_f, port=1005)
         replace_result_img_s.append(replace_result_img_1005)
+        replace_result_img_5007 = req_replace_face(pic_b=filename_replace_p, source_path_list=org_faces_f,
+                                                   target_path_list=to_faces_f, port=5007)
+        replace_result_img_s.append(replace_result_img_5007)
 
         for i, replace_result_img in enumerate(replace_result_img_s):
             if replace_result_img is not None:

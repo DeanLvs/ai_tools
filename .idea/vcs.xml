@@ -2,6 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/SocAIty" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/SocAIty/SpeechCraft" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/SocAIty/face2face" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/SocAIty/py_audio2face" vcs="Git" />

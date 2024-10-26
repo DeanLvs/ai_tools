@@ -319,8 +319,6 @@ def send_js(filename):
 
 @socketio.on('process_image_b')
 def add_image_processing_task(data):
-    if 1==1:
-        return 
     data['notify_type'] = 'ws'
     logger.info(f'get req is {data}')
     data['def_skin'] = 'inpaint'
@@ -331,8 +329,6 @@ def add_image_processing_task(data):
 
 @socketio.on('process_text_gen_pic')
 def process_text_gen_pic(data):
-    if 1==1:
-        return
     roomId = data['roomId']
     data['roomId'] = roomId
     data['notify_type'] = 'ws'

@@ -65,7 +65,7 @@ async def process_pics(data: RequestDataMul):
         final_img = f2f.swap(
             media=data.pic_b,
             faces=swap_map,
-            enhance_face_model='gpen_bfr_512'
+            enhance_face_model='gfpgan_1.4'
         )
         # 创建一个 BytesIO 对象，作为 ZIP 文件的内存存储
         zip_io = io.BytesIO()

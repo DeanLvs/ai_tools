@@ -5,7 +5,6 @@ setupSocketListeners(socket, room_id);
 let B = 1; // 从1开始的状态位
 let oddImageList = []; // 存储奇数次选择的图片src
 let evenImageList = []; // 存储偶数次选择的图片src
-let selectImageList = [];
 let clickCount = 0;
 let clickVCount = 0;
 let previousSeeds = new Set();
@@ -81,6 +80,16 @@ function uploadImage_face() {
     });
 }
 
+function resetSel(){
+    // 重置所有按钮为未选择状态
+    const allButtons = document.querySelectorAll('.select-button'); // 假设所有选择按钮都有类名 'select-button'
+    allButtons.forEach(btn => {
+        btn.style.backgroundColor = '#ccc';
+        btn.innerText = '选择';
+    });
+    document.getElementById('filename').value = '';
+}
+
 function handleSelectClick(imgSrc, button) {
     const fileName = imgSrc.split('/').pop();
     const currentBgColor = button.style.backgroundColor; // 当前按钮的背景颜色
@@ -90,20 +99,13 @@ function handleSelectClick(imgSrc, button) {
         // 将按钮恢复为未选择状态
         button.style.backgroundColor = '#ccc';
         button.innerText = '选择';
-        selectImageList = selectImageList.filter(item => item !== fileName);
-        if(selectImageList.length > 0){
-            document.getElementById('filename').value = selectImageList[selectImageList.length - 1];
-        }else{
-            document.getElementById('filename').value = '';
-        }
+        document.getElementById('filename').value = '';
         return;
     }
+    resetSel();
     button.style.backgroundColor = 'blue';
     button.innerText = '取消';
-    selectImageList.push(fileName);
-    if(selectImageList.length > 0){
-        document.getElementById('filename').value = selectImageList[selectImageList.length - 1];
-    }
+    document.getElementById('filename').value = fileName;
 }
 
 function handleSelectListClick(imgSrc, button) {
@@ -226,8 +228,8 @@ function uploadImage() {
 //        uploadedImage.style.display = 'block';
 //        const img = new Image();
 //        img.src = '/uploads' + '/' + room_id + '/' + data.file_url;
-        document.getElementById('regenerateButton_b').style.display = 'none';
-        document.getElementById('processImageButton_b').style.display = 'block';
+//        document.getElementById('regenerateButton_b').style.display = 'none';
+//        document.getElementById('processImageButton_b').style.display = 'block';
         hideOverlay();
     })
     .catch(error => {
@@ -411,7 +413,6 @@ function process_text_gen(userInput){
     face_filename = ''
     gen_type = ''
     socket.emit('process_text_gen_pic', { filename, prompt, reverse_prompt, face_filename, gen_type, roomId: room_id });
-    document.getElementById('processImageButton_b').style.display = 'none';
     setupSocketListeners(socket, room_id);
 }
 
@@ -475,7 +476,7 @@ function processImage_b() {
     const room_id = checkUUID();
     checkSocket();
     socket.emit('process_image_b', { filename, prompt, reverse_prompt, prompt_2, reverse_prompt_2, num_inference_steps, guidance_scale, seed, re_p, re_b, ha_p, ga_b, re_mask, strength,def_skin, roomId: room_id });
-    document.getElementById('processImageButton_b').style.display = 'none';
+//    document.getElementById('processImageButton_b').style.display = 'none';
     setupSocketListeners(socket, room_id);
 }
 
@@ -577,6 +578,7 @@ function checkUUID() {
 function viewImage() {
     const room_id = checkUUID();
     showOverlay();
+    resetSel();
     reconnectSocket(room_id);
 }
 
@@ -609,6 +611,6 @@ function processImage_v() {
     const room_id = checkUUID();
     checkSocket();
     socket.emit('process_image_b', { filename, def_skin, roomId: room_id });
-    document.getElementById('processImageButton_b').style.display = 'none';
+//    document.getElementById('processImageButton_b').style.display = 'none';
     setupSocketListeners(socket, room_id);
 }

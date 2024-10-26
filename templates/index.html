@@ -5,7 +5,7 @@
     <title>BOOK YES[仅供学术研究使用]</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <link rel="stylesheet" href="/css/e_styles.css">
-    <script src="js/p_core.js"></script>
+    <script src="js/r_core.js"></script>
     <style> .btcpay-form { display: inline-flex; align-items: center; justify-content: center; } .btcpay-form--inline { flex-direction: row; } .btcpay-form--block { flex-direction: column; } .btcpay-form--inline .submit { margin-left: 15px; } .btcpay-form--block select { margin-bottom: 10px; } .btcpay-form .btcpay-custom-container{ text-align: center; }.btcpay-custom { display: flex; align-items: center; justify-content: center; } .btcpay-form .plus-minus { cursor:pointer; font-size:25px; line-height: 25px; background: #DFE0E1; height: 30px; width: 45px; border:none; border-radius: 60px; margin: auto 5px; display: inline-flex; justify-content: center; } .btcpay-form select { -moz-appearance: none; -webkit-appearance: none; appearance: none; color: currentColor; background: transparent; border:1px solid transparent; display: block; padding: 1px; margin-left: auto; margin-right: auto; font-size: 11px; cursor: pointer; } .btcpay-form select:hover { border-color: #ccc; } .btcpay-form option { color: #000; background: rgba(0,0,0,.1); } .btcpay-input-price { -moz-appearance: textfield; border: none; box-shadow: none; text-align: center; font-size: 25px; margin: auto; border-radius: 5px; line-height: 35px; background: #fff; }.btcpay-input-price::-webkit-outer-spin-button, .btcpay-input-price::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } </style>
     <style>
     .update-notice {
@@ -32,15 +32,15 @@
 <main>
     <div id="updateNotice" class="update-notice">
 <!--        重要更新: BOOK YES v7.0 现已上线！<br>新的功能、更好的体验！点击<a href="release_notes.html" target="_blank">这里</a>查看更新内容。-->
-        当前正在集中算力训练新模型（到2024年10月25日晚8点可用）！！！
-        <br> 除换脸功能，其他功能暂停使用，望理解
-
+        先选择文件上传再从生成列表中选择你要处理的图片
+        <br>8.0持续优化了换衣时被遮盖区域的肢体的比例 位置推断
+        <br>bookyes 自定义情景 可以保留选择图人物特征进行重绘（依次生成7张图）
     </div>
     <div class="right-panel">
         <div class="section">
             <input type="file" id="fileInput">
             <button id="processImageButton_b" onclick="processImage_b()">选完图片点我bookyes 8.0</button>
-            <button id="regenerateButton_b" style="display: none;" onclick="regenerateImage_b()">不满意可以点我重新book图像</button>
+            <button id="regenerateButton_b" style="display: none;" onclick="regenerateImage_b()">bookyes8.0不满意可以点我重来</button>
             <div class="file-input-container">
                 <button id="openModalButton" onclick="showModal()">点我book自定义情景</button>
             </div>

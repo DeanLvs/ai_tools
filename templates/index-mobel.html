@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bookyes</title>
+    <!-- Fancybox CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0.0/dist/fancybox.min.css" />
+
+    <!-- Fancybox JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0.0/dist/fancybox.umd.js"></script>
+    <style>
+        /* 全局页面样式适配 */
+        body {
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 左侧图片列表区域 */
+        .left-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f1f1f1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            box-sizing: border-box;
+            justify-content: center;
+        }
+
+        .image-container {
+            width: 120px;
+            height: 120px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* 右侧操作区域 (在手机端底部显示) */
+        .right-panel {
+            width: 100%;
+            padding: 10px;
+            background-color: #f9f9f9;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            z-index: 2;
+            pointer-events: auto;
+        }
+
+        /* 进度条和在线用户数显示 */
+        .progress-container, .online-users {
+            width: 90%;
+            margin-top: 5px;
+        }
+
+        .upload-section .small-button, .upload-section .file-upload-button {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        /* 聊天容器适配 */
+        .chat-container {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f9f9f9;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .chat-input input {
+            padding: 6px;
+            font-size: 14px;
+        }
+
+        /* 调整上传区和控制区的布局 */
+        .controls-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+
+        /* 模态框样式调整 */
+        .modal-overlay {
+            align-items: flex-end;
+            padding: 20px;
+        }
+
+        .modal {
+            width: 90%;
+            padding: 15px;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        let socket = io();
+        let sourceImage = null;
+        let org_faces_name = []
+        let to_faces_name = []
+        // 用于记录已处理的文件名
+        const processedFiles = new Set();
+        let room_id = checkUUID();
+        let rev_pre = false;
+        checkSocket();
+        /**
+         * 向 chatBox 中添加一条消息
+         * @param {string} message - 要显示的消息文本
+         * @param {string} sender - 消息的发送者类型 ('user' 或 'server')
+         */
+        function addChatMessage(topic, message, sender) {
+            console.log('receive message:', topic, message);
+            const chatBox = document.getElementById('chatBox');
+
+            // 创建消息元素
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message', sender === 'user' ? 'user' : 'server');
+            messageDiv.textContent = message;
+
+            // 将消息元素添加到 chatBox 中
+            chatBox.appendChild(messageDiv);
+
+            // 自动滚动到底部
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function resetSel(){
+            const allButtons = document.querySelectorAll('.select-button');
+            allButtons.forEach(btn => {
+                btn.style.backgroundColor = '#ccc';
+                btn.innerText = '选择';
+            });
+            document.getElementById('filename').value = '';
+        }
+
+        /**
+         * Reset all unpaired buttons to their default "选择" state.
+         */
+        function resetAllButtons() {
+            document.querySelectorAll('.source-button').forEach((btn) => {
+                btn.classList.add('target-button');
+                btn.classList.remove('source-button');
+                btn.innerText = '选择目标脸';
+            });
+        }
+
+        function resetAllButtonsToSource() {
+            document.querySelectorAll('.target-button').forEach((btn) => {
+                btn.classList.add('source-button');
+                btn.classList.remove('target-button');
+                btn.innerText = '选择源脸';
+            });
+            document.querySelectorAll('.source-selected').forEach((btn) => {
+                btn.classList.add('source-button');
+                btn.classList.remove('source-selected');
+                btn.innerText = '选择源脸';
+            });
+        }
+
+        function handleSourceTargetSelection(imgSrc, button) {
+            const fileName = imgSrc.split('/').pop();
+            // Select source image
+            if (button.classList.contains('source-button')) {
+                button.classList.remove('source-button');
+                button.classList.add('source-selected');
+                button.innerText = '当前源脸';
+                sourceImage=imgSrc;
+                resetAllButtons();
+            } else if (button.classList.contains('target-button')) {
+                const pairList = document.getElementById('pairList');
+                pairList.style.display = 'block';
+
+                // 动态添加按钮
+                const clearButton = document.createElement('button');
+                clearButton.id = 'pairList-button';
+                clearButton.className = 'clear-button';
+                clearButton.innerText = '清空配对';
+                clearButton.onclick = clearPairs;
+                pairList.appendChild(clearButton);
+
+                addPairToList(sourceImage, imgSrc);
+                source_face_name = sourceImage.split('/').pop();
+                org_faces_name.push(source_face_name);
+                to_faces_name.push(fileName);
+                sourceImage = null;
+                resetAllButtonsToSource();
+            }
+        }
+
+        function isVideoFile(filename) {
+            // 定义视频文件扩展名的数组
+            const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm'];
+
+            // 获取文件扩展名并转为小写
+            const fileExtension = filename.slice(filename.lastIndexOf('.')).toLowerCase();
+
+            // 判断文件扩展名是否在视频扩展名列表中
+            return videoExtensions.includes(fileExtension);
+        }
+
+        function handleSelectClick(imgSrc, button) {
+            const fileName = imgSrc.split('/').pop();
+            const currentBgColor = button.style.backgroundColor;
+            if (currentBgColor === 'blue') {
+                // 将按钮恢复为未选择状态
+                button.style.backgroundColor = '#ccc';
+                button.innerText = '选择';
+                document.getElementById('filename').value = '';
+                return;
+            }
+            resetSel();
+            button.style.backgroundColor = 'blue';
+            button.innerText = '取消';
+            document.getElementById('filename').value = fileName;
+        }
+        function add_img_to_list(url_path, specialImageListDiv, p_name, in_img_type) {
+            console.log(url_path)
+            const imgContainer = document.createElement('div');
+            imgContainer.classList.add('image-container');
+
+            // 使用 <a> 标签包裹图片，以启用 Fancybox
+            const link = document.createElement('a');
+            link.href = url_path;
+            link.setAttribute('data-fancybox', 'gallery'); // 添加 Fancybox 画廊属性
+            link.setAttribute('data-caption', p_name || "处理结果"); // 设置图片标题
+
+            if (url_path.endsWith('.mp4')) {
+                const video = document.createElement('video');
+                video.src = url_path;
+                video.controls = true;
+                video.alt = '处理后的视频';
+                link.appendChild(video);
+            } else {
+                const img = document.createElement('img');
+                img.src = url_path;
+                img.alt = '处理后的图片';
+                link.appendChild(img);
+            }
+
+            imgContainer.appendChild(link);
+
+            // 创建浮动层
+            const overlay = document.createElement('div');
+            overlay.classList.add('image-overlay');
+
+            // 标题
+            const caption = document.createElement('span');
+            caption.innerText = p_name || "处理结果";
+            overlay.appendChild(caption);
+
+            // 选择按钮
+            const selectButton = document.createElement('button');
+
+            if(in_img_type == 'face_pre'){
+                selectButton.innerText = '脸部源';
+                selectButton.classList.add('source-button');
+                selectButton.onclick = () => handleSourceTargetSelection(link.href, selectButton);
+            } else {
+                selectButton.innerText = '选择';
+                selectButton.classList.add('select-button');
+                selectButton.onclick = () => handleSelectClick(link.href, selectButton);
+            }
+
+            overlay.appendChild(selectButton);
+            imgContainer.appendChild(overlay);
+            specialImageListDiv.appendChild(imgContainer);
+        }
+        function uuidv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function setupSocketListeners(socket, room_id) {
+            socket.on('connect', () => {
+                const session_id = socket.id;
+                console.log('Connected with session ID:', session_id);
+                socket.emit('join_room', { roomId: room_id });
+            });
+            socket.on('disconnect', () => {
+                room_id = checkUUID();
+                console.log('Socket disconnected. Attempting to reconnect...');
+                reconnectSocket(room_id);
+            });
+            socket.on('processing_step_progress', (data) => {
+                addChatMessage('processing_step_progress', data.text, 'server');
+            });
+
+            socket.on('processing_progress', (data) => {
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.style.width = `${data.progress}%`;
+                progressBar.innerText = `${data.progress}%`;
+                if (data.had) {
+                    progressBar.innerText = progressBar.innerText + ' ' + data.had
+                }
+            });
+
+            socket.on('processing_done_text', (data) => {
+                addChatMessage('processing_done_text', data.text, 'server');
+            });
+
+            // 监听服务器发送的 'online_users' 事件
+            socket.on('online_users', (data) => {
+                const onlineUsersElement = document.getElementById('onlineUsers');
+                onlineUsersElement.innerText = `在线人数: ${data.count}`;
+            });
+
+            socket.on('processing_done', (data) => {
+                const imageListDiv = document.getElementById('imageList');
+                if (!data.processed_image_url.startsWith('/uploads')) {
+                    data.processed_image_url = '/uploads' + '/' + room_id + '/' + data.processed_image_url;
+                }
+                // 获取文件名，用于查找重复的元素
+                const newFileName = data.processed_image_url.split('/').pop();
+                // 检查是否已处理该文件名
+                if (processedFiles.has(newFileName)) {
+                    // 如果文件名已处理过，直接跳过
+                    console.log(`文件 ${newFileName} 已处理，跳过重复处理`);
+                    return;
+                }
+                // 添加文件名到集合，标记为已处理
+                processedFiles.add(newFileName);
+                // 删除已有相同文件名的图片
+                const existingImages = imageListDiv.querySelectorAll('img');
+                existingImages.forEach(img => {
+                    const imgSrcPath = new URL(img.src).pathname;
+                    const existingFileName = imgSrcPath.split('/').pop();
+                    if (existingFileName === newFileName) {
+                        img.parentElement.remove(); // 移除匹配的图片容器
+                    }
+                });
+
+                // 删除已有相同文件名的视频
+                const existingVideos = imageListDiv.querySelectorAll('video');
+                existingVideos.forEach(video => {
+                    const videoSrcPath = new URL(video.src).pathname;
+                    const existingFileName = videoSrcPath.split('/').pop();
+                    if (existingFileName === newFileName) {
+                        video.parentElement.remove(); // 移除匹配的视频容器
+                    }
+                });
+                if(data.img_type == 'done' || data.img_type == 'face_pre'){
+                    add_img_to_list(data.processed_image_url, imageListDiv, data.name, data.img_type);
+                }else if(rev_pre){
+                    add_img_to_list(data.processed_image_url, imageListDiv, data.name, data.img_type);
+                }
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.style.width = '0%';
+                progressBar.innerText = '';
+                if (!data.keephide) {
+                }
+            });
+        }
+
+        function addPairToList(sourceImg, targetImg) {
+            const pairList = document.getElementById('pairList');
+            const pairItem = document.createElement('div');
+            pairItem.className = 'pair-item';
+
+            // Source image thumbnail
+            const sourceThumbnail = document.createElement('img');
+            sourceThumbnail.src = sourceImg;
+            sourceThumbnail.className = 'thumbnail';
+
+            // Target image thumbnail
+            const targetThumbnail = document.createElement('img');
+            targetThumbnail.src = targetImg;
+            targetThumbnail.className = 'thumbnail';
+
+            // Arrow element
+            const arrow = document.createElement('span');
+            arrow.className = 'arrow';
+            arrow.textContent = '→';
+
+            // Add items to pairItem div
+            pairItem.appendChild(sourceThumbnail);
+            pairItem.appendChild(arrow);
+            pairItem.appendChild(targetThumbnail);
+            pairList.appendChild(pairItem);
+        }
+
+        function processImage_inpaint_b() {
+            const filename = document.getElementById('filename').value;
+            if (!filename || filename.trim() === '') {
+                alert('先选择一个要处理的图吧');
+                // 这里可以添加其他处理逻辑，比如阻止表单提交等
+                return;
+            }
+            if(isVideoFile(filename)){
+                alert('算力紧张，视频处理请等待低峰期再提交');
+                return;
+            }
+            showOverlay();
+            const room_id = checkUUID();
+            checkSocket();
+            socket.emit('process_image_inpaint', { filename, roomId: room_id });
+        }
+
+        function check_face_b() {
+            const filename = document.getElementById('filename').value;
+            if (!filename || filename.trim() === '') {
+                alert('先选择一个要处理的图吧');
+                // 这里可以添加其他处理逻辑，比如阻止表单提交等
+                return;
+            }
+            if(isVideoFile(filename)){
+                alert('算力紧张，视频处理请等待低峰期再提交');
+                return;
+            }
+            showOverlay();
+            const room_id = checkUUID();
+            checkSocket();
+            pre_face_pic_list = [filename]
+            socket.emit('process_pic_find_face', { filename, pre_face_pic_list, roomId: room_id});
+        }
+
+        function swap_face_b() {
+            const filename = document.getElementById('filename').value;
+            if (!filename || filename.trim() === '') {
+                alert('先选择一个要处理的图吧');
+                // 这里可以添加其他处理逻辑，比如阻止表单提交等
+                return;
+            }
+            if (org_faces_name.length <= 0 || to_faces_name.length <= 0 || org_faces_name.length !== to_faces_name.length) {
+                alert('先选择需要交换的图片后，分别提取 面部特征后 选择 源脸 和 目标脸配对');
+                return;
+            }
+            topic = 'process_pic_swap_face';
+            if(isVideoFile(filename)){
+                topic = 'process_video_swap_face';
+            }
+            showOverlay();
+            console.log('swap info', to_faces_name, org_faces_name, filename);
+            const room_id = checkUUID();
+            checkSocket();
+            pre_face_pic_list = [filename]
+            socket.emit(topic, { filename, org_faces: org_faces_name, to_faces: to_faces_name, roomId: room_id});
+        }
+
+        function checkSocket(){
+            if (!socket || !socket.connected) {
+                console.log('Attempting to reconnect...');
+                initializeSocket(room_id);
+            }
+        }
+
+        function reconnectSocket(room_id) {
+            if (!socket || !socket.connected) {
+                console.log('Attempting to reconnect...');
+                initializeSocket(room_id);
+            }
+            socket.emit('re_get', { roomId:room_id });
+        }
+
+        function initializeSocket(room_id) {
+            if (socket) {
+                socket.disconnect(); // 断开现有的 socket 连接
+            }
+            socket = io();
+            setupSocketListeners(socket, room_id);
+        }
+
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days*24*60*60*1000));
+            const expires = "expires="+ d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i=0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(nameEQ) === 0) {
+                    return c.substring(nameEQ.length, c.length);
+                }
+            }
+            return null;
+        }
+
+        function checkUUID() {
+            let uuid = getCookie("uuid");
+            if (uuid === null) {
+                uuid = uuidv4();
+                setCookie("uuid", uuid, 365); // 存储一年
+            }
+            return uuid;
+        }
+        function viewImage() {
+            const room_id = checkUUID();
+            resetSel();
+            reconnectSocket(room_id);
+        }
+        function clearPairs() {
+            document.getElementById('pairList').innerHTML = '';
+            org_faces_name = []
+            to_faces_name = []
+            document.getElementById('pairList').style.display = 'none';
+        }
+
+        function showModal() {
+            const filename = document.getElementById('filename').value;
+            if (!filename || filename.trim() === '') {
+                alert('先选择一个要处理的图吧');
+                // 这里可以添加其他处理逻辑，比如阻止表单提交等
+                return;
+            }
+            if(isVideoFile(filename)){
+                alert('算力紧张，视频处理请等待低峰期再提交');
+                return;
+            }
+            const modalOverlay = document.getElementById('modalOverlay');
+            modalOverlay.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const modalOverlay = document.getElementById('modalOverlay');
+            modalOverlay.style.display = 'none';
+        }
+
+        function confirmInput() {
+            const userInput = document.getElementById('modalTextarea').value;
+            console.log("User input:", userInput);
+            if (userInput === "") {
+                alert("请输入内容！");
+                return;
+            }
+            showOverlay();
+            const room_id = checkUUID();
+            prompt = userInput
+            reverse_prompt = ''
+            const filename = document.getElementById('filename').value;
+            gen_type = ''
+            checkSocket();
+            face_filename=''
+            socket.emit('process_text_gen_pic', { filename, face_filename, prompt, reverse_prompt, gen_type, roomId: room_id});
+            closeModal();
+        }
+
+        function confirmInputFlux() {
+            const userInput = document.getElementById('modalTextarea').value;
+            console.log("User input:", userInput);
+            if (userInput === "") {
+                alert("请输入内容！");
+                return;
+            }
+            showOverlay();
+            const room_id = checkUUID();
+            prompt = userInput
+            reverse_prompt = ''
+            const filename = document.getElementById('filename').value;
+            gen_type = 'flux'
+            checkSocket();
+            face_filename=''
+            socket.emit('process_text_gen_pic', { filename, face_filename, prompt, reverse_prompt, gen_type, roomId: room_id});
+            closeModal();
+        }
+
+        function showOverlay() {
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        function closeOverlay() {
+            document.getElementById('overlay').style.display = 'none';
+        }
+    </script> <!-- 记得替换成你的JS文件路径 -->
+</head>
+<body>
+    <!-- 左侧图片列表区域 -->
+    <div class="left-panel" id="imageList">
+        <!-- 动态添加生成的图片 -->
+    </div>
+
+    <!-- 右侧操作区域 -->
+    <div class="right-panel">
+        <div class="controls-container">
+            <h4>bookyes8.0</h4>
+            <div class="upload-section">
+                <label class="file-upload-button">
+                    上传图片或视频
+                    <input type="file" id="fileInput" accept="image/*,video/*" onchange="uploadImage()" />
+                </label>
+                <button class="small-button" onclick="processImage_inpaint_b()">换装</button>
+                <button class="small-button" onclick="showModal()">换场景</button>
+                <button class="small-button" onclick="check_face_b()">面部特征提取</button>
+                <button class="small-button" onclick="swap_face_b()">换脸</button>
+                <button class="small-button" onclick="viewImage()">查看历史</button>
+            </div>
+            <input type="hidden" id="filename">
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <!-- List of selected pairs -->
+            <div class="pair-list" id="pairList">
+            </div>
+
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-box" id="chatBox">
+                <!-- WebSocket 接收的消息将会被动态插入在此 -->
+            </div>
+            <div id="onlineUsers" class="online-users">在线人数: 0</div>
+        </div>
+    </div>
+    <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+        <textarea id="modalTextarea" placeholder="请输入内容..."></textarea>
+        <button onclick="confirmInput()">使用1.0版本</button>
+        <button onclick="confirmInputFlux()">使用1.2版本</button>
+        <button onclick="closeModal()">取消</button>
+    </div>
+</div>
+
+    <div class="overlay" id="overlay">
+    <div class="overlay-content">
+        <p>正在执行中，请稍候...注意右下脚的消息通知</p>
+        <button onclick="closeOverlay()">确定</button>
+    </div>
+    </div>
+<script>
+        document.getElementById('fileInput').addEventListener('change', function() {
+            uploadImage();
+        });
+
+        function uploadImage() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            room_id = checkUUID();
+            formData.append('room_id', room_id);
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

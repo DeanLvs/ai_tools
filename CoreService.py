@@ -584,6 +584,8 @@ def req_replace_face(pic_b='', pic_save=None, source_path_list=None, target_path
             print(f"请求失败，状态码: {response.status_code}, 错误信息: {response.text}")
         return None
     except Exception as e:
+        print(f"请求失败l了{e}")
+        traceback.print_exc()
         logger.error(f"Error processing response: {e}")
         return None
 def req_text_gen(file_path, prompt, free_fast=True, only_face_path='',seed=2023, gen_type='', port=1060, room_id=None):
@@ -1138,14 +1140,15 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                                              notify_type=notify_type)
 
         # 1006 flux ip
-        text_gen_img_s_t = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, port=1006, room_id=room_id)
-        for idx, text_gen_img in enumerate(text_gen_img_s_t):
-            file_txt_name = f'p_flux_{idx}_{unique_key}.png'
-            logger.info(f"Image {idx} saved to {file_txt_name}")
-            file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
-            room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'done','生成图', file_i = text_gen_img,
-                                         file_p = file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
-                                         notify_type=notify_type)
+        if gen_type == 'ipFlux':
+            text_gen_img_s_t = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, port=1006, room_id=room_id)
+            for idx, text_gen_img in enumerate(text_gen_img_s_t):
+                file_txt_name = f'p_flux_{idx}_{unique_key}.png'
+                logger.info(f"Image {idx} saved to {file_txt_name}")
+                file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
+                room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'done','生成图', file_i = text_gen_img,
+                                             file_p = file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
+                                             notify_type=notify_type)
 
         notify_fuc(notify_type, 'processing_step_progress',
                    {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id, keyList=get_rest_key())
@@ -1225,6 +1228,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
             to_faces_f.append(get_fin_hold_path(room_id, s))
         video_by_name(room_id, filename, 1005, org_faces_f, to_faces_f, notify_fuc, notify_type)
         video_by_name(room_id, filename, 5000, org_faces_f, to_faces_f, notify_fuc, notify_type)
+        video_by_name(room_id, filename, 5007, org_faces_f, to_faces_f, notify_fuc, notify_type)
         return
     # pre_face_pic_list
     if def_skin == 'swap_face':
@@ -1246,7 +1250,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
             file_face_name_path = os.path.join(app_path, room_id, file_face_name)
             room_image_manager.insert_imgStr(room_id, f'{file_face_name}', 'face_pre','识别脸图', file_i = face_gen_img,
                                          file_p = file_face_name_path, ext_info='', notify_fuc=notify_fuc,
-                                         notify_type='none')
+                                         notify_type=notify_type)
             media_group.append(InputMediaPhoto(open(file_face_name_path, 'rb'), caption=f"图片{file_face_name}"))
         to_keyboard_face.append([
             InlineKeyboardButton(f"重新选择", callback_data=f"reset_pre_face")

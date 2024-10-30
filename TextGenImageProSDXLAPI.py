@@ -3,6 +3,7 @@ import os
 import traceback
 import hashlib, requests, random
 import torch
+import uuid
 import gc
 import zipfile
 from CustCoun import encode_prompt_with_cache
@@ -14,12 +15,13 @@ from diffusers import (StableDiffusionXLPipeline,StableDiffusionXLControlNetPipe
                        EulerDiscreteScheduler, DPMSolverMultistepScheduler, UniPCMultistepScheduler, DDIMScheduler)
 from transformers import CLIPTextModel, CLIPTokenizer, CLIPImageProcessor, CLIPTextModelWithProjection
 from safetensors.torch import load_file as load_safetensors
-from TextGenImageProFluxAPI import gen_img_canny_control_with_face
+from TextGenImageProFluxAPI import gen_img_canny_control_with_face, gen_img_and_swap_face
 from transUnet import get_new_key
 from transVae import transform_line
 from ccxx import convert_ldm_vae_checkpoint, convert_ldm_unet_checkpoint
 from text_encoder_2_conver import convert_keys
 from book_yes_logger_config import logger
+from CoreService import req_replace_face
 def replace_keys_unet(state_dict):
     new_state_dict = {}
     for key, value in state_dict.items():
@@ -508,7 +510,6 @@ def progress_callback(step, t, latents, had, room_id, num_inference_steps):
 def create_callback(had_value, room_id, num_inference_steps):
     return lambda step, t, latents: progress_callback(step, t, latents, had_value, room_id, num_inference_steps)
 
-
 def center_image_on_black_background(image, target_size=(640, 640)):
     """
     如果图像小于指定大小，则将其放在纯黑色背景的中心。
@@ -857,8 +858,24 @@ async def inpaint(
             images_v1 = ip_sdxl_plus_v1(face_pic_path = file_path, prompt=prompt, seed=seed, only_face_pic_path= only_file_path, room_id=room_id)
             total_pic.extend(images_v1)
         else:
-            images_flux = gen_img_canny_control_with_face(file_path, prompt)
-            total_pic.extend(images_flux)
+            # flux
+            images_flux = gen_img_and_swap_face(prompt, room_id=room_id)
+            if only_file_path is not None and only_file_path != '':
+                face_pic_path = only_file_path
+            else:
+                face_pic_path = file_path
+            print(f'{face_pic_path}')
+            temp_save_path = os.path.dirname(face_pic_path)
+            temp_save_file = temp_save_path + '/' +str(uuid.uuid4()) + '.png'
+            org_faces_f = [temp_save_file]
+            to_faces_f = [face_pic_path]
+            images_flux.save(temp_save_file)
+            replace_result_img_5007 = req_replace_face(pic_b=temp_save_file, source_path_list=org_faces_f,
+                                                       target_path_list=to_faces_f, port=5007)
+            if replace_result_img_5007 is not None:
+                total_pic.append(replace_result_img_5007)
+            else:
+                total_pic.append(images_flux)
         # 创建一个 BytesIO 对象，作为 ZIP 文件的内存存储
         zip_io = io.BytesIO()
 

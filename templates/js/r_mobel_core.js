@@ -2,6 +2,9 @@ let socket = io();
 let room_id = checkUUID();
 setupSocketListeners(socket, room_id);
 
+let B = 1; // 从1开始的状态位
+let oddImageList = []; // 存储奇数次选择的图片src
+let evenImageList = []; // 存储偶数次选择的图片src
 let clickCount = 0;
 let clickVCount = 0;
 let previousSeeds = new Set();
@@ -36,14 +39,17 @@ function processImage_b_face() {
     const filename_handler = document.getElementById('filename').value;
     const filename_face = document.getElementById('filename_face').value;
     if (!filename_handler || filename_handler.trim() === '' || !filename_face || filename_face.trim() === '') {
-        alert('你需要选择上传待处理图片，和一个有脸的图');
+        alert('你需要选择一个待处理图片，和一个有脸的图');
         // 这里可以添加其他处理逻辑，比如阻止表单提交等
         return;
     }
     showOverlay();
     const room_id = checkUUID();
     checkSocket();
-    socket.emit('process_replace_image_b', { room_id, filename_face: filename_face, filename_handler: filename_handler });
+    org_faces = [filename_handler]
+    to_faces = [filename_face]
+    filename = filename_handler
+    socket.emit('process_pic_swap_face', { org_faces, to_faces, filename ,roomId: room_id});
 
     setupSocketListeners(socket, room_id);
 }
@@ -72,6 +78,87 @@ function uploadImage_face() {
         console.error('Error:', error);
         hideOverlay();
     });
+}
+
+function resetSel(){
+    // 重置所有按钮为未选择状态
+    const allButtons = document.querySelectorAll('.select-button'); // 假设所有选择按钮都有类名 'select-button'
+    allButtons.forEach(btn => {
+        btn.style.backgroundColor = '#ccc';
+        btn.innerText = '选择';
+    });
+    document.getElementById('filename').value = '';
+}
+
+function handleSelectClick(imgSrc, button) {
+    const fileName = imgSrc.split('/').pop();
+    const currentBgColor = button.style.backgroundColor; // 当前按钮的背景颜色
+
+    // 检查按钮是否已经被选择，如果是，就取消选择并从列表中移除
+    if (currentBgColor === 'blue') {
+        // 将按钮恢复为未选择状态
+        button.style.backgroundColor = '#ccc';
+        button.innerText = '选择';
+        document.getElementById('filename').value = '';
+        return;
+    }
+    resetSel();
+    button.style.backgroundColor = 'blue';
+    button.innerText = '取消';
+    document.getElementById('filename').value = fileName;
+}
+
+function handleSelectListClick(imgSrc, button) {
+    const fileName = imgSrc.split('/').pop();
+    const currentBgColor = button.style.backgroundColor; // 当前按钮的背景颜色
+
+    // 检查按钮是否已经被选择，如果是，就取消选择并从列表中移除
+    if (currentBgColor === 'blue' || currentBgColor === 'green') {
+        // 将按钮恢复为未选择状态
+        button.style.backgroundColor = '#ccc';
+
+        // 从奇数列表或偶数列表中移除 fileName
+        if (currentBgColor === 'blue') {
+            // 从奇数列表移除
+            oddImageList = oddImageList.filter(item => item !== fileName);
+        } else if (currentBgColor === 'green') {
+            // 从偶数列表移除
+            evenImageList = evenImageList.filter(item => item !== fileName);
+        }
+        console.log('取消选择:', fileName);
+        console.log('奇数选择的图片:', oddImageList);
+        console.log('偶数选择的图片:', evenImageList);
+        return;
+    }
+    // 增加状态位 B
+    B++;
+    // 检查状态位是奇数还是偶数
+    if (B % 2 === 1) {
+        // 奇数，按钮颜色为蓝色
+        button.style.backgroundColor = 'blue';
+        // 将图片src放入奇数列表
+        oddImageList.push(fileName);
+    } else {
+        // 偶数，按钮颜色为绿色
+        button.style.backgroundColor = 'green';
+        // 将图片src放入偶数列表
+        evenImageList.push(fileName);
+    }
+    document.getElementById('filename').value = fileName;
+    console.log('当前状态位 B:', B);
+    console.log('奇数选择的图片:', oddImageList);
+    console.log('偶数选择的图片:', evenImageList);
+}
+
+function resetSelectClick(imgSrc, button) {
+    // 增加状态位 B
+    B = 1;
+    oddImageList = []; // 存储奇数次选择的图片src
+    evenImageList = []; // 存储偶数次选择的图片src
+
+    console.log('当前状态位 B:', B);
+    console.log('奇数选择的图片:', oddImageList);
+    console.log('偶数选择的图片:', evenImageList);
 }
 
 function add_img_to_list(url_path, specialImageListDiv, p_name){
@@ -103,6 +190,14 @@ function add_img_to_list(url_path, specialImageListDiv, p_name){
         img.alt = '处理后的图片';
         img.onclick = () => showFullscreenImage(url_path, fileName);
         imgContainer.appendChild(img);
+        // 创建选择按钮
+        const selectButton = document.createElement('button');
+        selectButton.innerText = '选择';
+        selectButton.classList.add('select-button');
+        selectButton.style.backgroundColor = '#ccc'; // 初始按钮颜色
+        selectButton.onclick = () => handleSelectClick(img.src, selectButton);
+        imgContainer.appendChild(selectButton);
+
     }
     const caption = document.createElement('p');
     caption.innerText = title;
@@ -128,14 +223,13 @@ function uploadImage() {
     })
     .then(response => response.json())
     .then(data => {
-        const uploadedImage = document.getElementById('uploadedImage');
-        uploadedImage.src = '/uploads' + '/' + room_id + '/' + data.file_url;
-        uploadedImage.style.display = 'block';
-        const img = new Image();
-        img.src = '/uploads' + '/' + room_id + '/' + data.file_url;
-        document.getElementById('filename').value = data.filename;
-        document.getElementById('regenerateButton_b').style.display = 'none';
-        document.getElementById('processImageButton_b').style.display = 'block';
+//        const uploadedImage = document.getElementById('uploadedImage');
+//        uploadedImage.src = '/uploads' + '/' + room_id + '/' + data.file_url;
+//        uploadedImage.style.display = 'block';
+//        const img = new Image();
+//        img.src = '/uploads' + '/' + room_id + '/' + data.file_url;
+//        document.getElementById('regenerateButton_b').style.display = 'none';
+//        document.getElementById('processImageButton_b').style.display = 'block';
         hideOverlay();
     })
     .catch(error => {
@@ -203,8 +297,8 @@ function setupSocketListeners(socket, room_id) {
         // 检查 processImageButton_b 是否可见
         if (processButton.style.display === 'none') {
             // 只有当 processImageButton_b 不可见时才执行
-            document.getElementById('regenerateButton_b').style.display = 'block';
-            processButton.style.display = 'none';
+//            document.getElementById('regenerateButton_b').style.display = 'block';
+//            processButton.style.display = 'none';
         }
     });
     socket.on('processing_progress', (data) => {
@@ -304,10 +398,61 @@ function load_lora_b() {
     socket.emit('process_set_lora', { roomId, lora_id, wei_id});
 }
 
+function process_text_gen(userInput){
+    const filename = document.getElementById('filename').value;
+    if (!filename || filename.trim() === '') {
+        alert('先选择一个要处理的图吧');
+        // 这里可以添加其他处理逻辑，比如阻止表单提交等
+        return;
+    }
+    showOverlay();
+    const room_id = checkUUID();
+    checkSocket();
+    prompt = userInput
+    reverse_prompt = ''
+    face_filename = ''
+    gen_type = ''
+    socket.emit('process_text_gen_pic', { filename, prompt, reverse_prompt, face_filename, gen_type, roomId: room_id });
+    setupSocketListeners(socket, room_id);
+}
+
+// 显示悬浮框
+function showModal() {
+    const filename = document.getElementById('filename').value;
+    if (!filename || filename.trim() === '') {
+        alert('先选择一个要处理的图吧');
+        // 这里可以添加其他处理逻辑，比如阻止表单提交等
+        return;
+    }
+    document.getElementById('myModal').style.display = 'flex';
+}
+
+// 关闭悬浮框
+function closeModal() {
+    document.getElementById('myModal').style.display = 'none';
+}
+
+// 点击确定按钮时执行的逻辑
+function confirmInput() {
+    const userInput = document.getElementById('userInput').value;
+    if (userInput.trim() === '') {
+        alert('输入不能为空');
+        return;
+    }
+    console.log('用户输入:', userInput);
+
+    // 在这里执行你的方法
+    process_text_gen(userInput);
+
+    // 关闭悬浮框
+    closeModal();
+}
+
+
 function processImage_b() {
     const filename = document.getElementById('filename').value;
     if (!filename || filename.trim() === '') {
-        alert('你啥也没上传呢还');
+        alert('先选择一个要处理的图吧');
         // 这里可以添加其他处理逻辑，比如阻止表单提交等
         return;
     }
@@ -331,7 +476,7 @@ function processImage_b() {
     const room_id = checkUUID();
     checkSocket();
     socket.emit('process_image_b', { filename, prompt, reverse_prompt, prompt_2, reverse_prompt_2, num_inference_steps, guidance_scale, seed, re_p, re_b, ha_p, ga_b, re_mask, strength,def_skin, roomId: room_id });
-    document.getElementById('processImageButton_b').style.display = 'none';
+//    document.getElementById('processImageButton_b').style.display = 'none';
     setupSocketListeners(socket, room_id);
 }
 
@@ -433,6 +578,7 @@ function checkUUID() {
 function viewImage() {
     const room_id = checkUUID();
     showOverlay();
+    resetSel();
     reconnectSocket(room_id);
 }
 
@@ -465,6 +611,6 @@ function processImage_v() {
     const room_id = checkUUID();
     checkSocket();
     socket.emit('process_image_b', { filename, def_skin, roomId: room_id });
-    document.getElementById('processImageButton_b').style.display = 'none';
+//    document.getElementById('processImageButton_b').style.display = 'none';
     setupSocketListeners(socket, room_id);
 }

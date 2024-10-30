@@ -137,6 +137,7 @@ async def process_pics(
         file_path: str = Form(...),  # 从表单接收文件路径
         prompt: str = Form(...),  # 从表单接收 prompt 字符串
         seed: int = Form(...),
+        room_id: Optional[str] = Form(None),
         gen_type: Optional[str] = Form(None),
         only_file_path: Optional[str] = Form(None)
 ):

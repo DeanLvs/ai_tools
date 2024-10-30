@@ -1,4 +1,4 @@
-import torch, cv2
+import torch, cv2, requests
 import matplotlib.pyplot as plt
 from diffusers.utils import load_image
 from diffusers import FluxControlNetModel
@@ -8,6 +8,34 @@ from PIL import Image
 from diffusers.models import FluxMultiControlNetModel
 from controlnet_aux import NormalBaeDetector
 from diffusers.utils import load_image
+from book_yes_logger_config import logger
+
+def req_text_gen(progress, had, room_id, port=5003):
+    # 发起 HTTP POST 请求
+    url = f"http://localhost:{port}/"
+    data = {
+        'progress': progress,
+        'had': had,
+        'room_id':room_id
+    }
+    try:
+        response = requests.post(url+'gencallback', data=data)
+    except Exception as e:
+        logger.error(f"Error processing response: {e}")
+
+def call_main_service(progress, had, room_id):
+    logger.info(f'call back {progress} {had} {room_id}')
+    req_text_gen(progress, had, room_id)
+    return
+def progress_callback(pipeline_instance, step, t, latents, had, room_id, num_inference_steps):
+    # 仅在每 5 个步骤调用一次
+    if step == 0 or step % 5 == 0 or step == num_inference_steps - 1:  # 或在最后一步调用
+        progress = int((step / num_inference_steps) * 100)
+        call_main_service(progress, had, room_id)
+    return latents
+def create_callback(had_value, room_id, num_inference_steps):
+    # lambda 函数接受 4 个参数，以配合 FluxPipeline 的 callback_on_step_end 调用
+    return lambda pipeline_instance, step, t, latents: progress_callback(pipeline_instance, step, t, latents, had_value, room_id, num_inference_steps)
 
 def transNormal(in_image_path):
     normal_bae = NormalBaeDetector.from_pretrained("lllyasviel/Annotators")
@@ -69,6 +97,9 @@ def gen_img_normals_control(control_image, prompt):
 def gen_img_canny_control_with_face(control_image_path, prompt):
     control_image = canny_face(control_image_path)
     return gen_img_canny_control(control_image, prompt)
+def gen_img_and_swap_face(prompt, room_id=None):
+    return text_get_img(prompt, room_id)
+
 def gen_img_canny_control(control_image, prompt):
     # Load pipeline
     controlnet_model = 'InstantX/FLUX.1-dev-Controlnet-Canny'
@@ -94,7 +125,7 @@ def gen_img_canny_control(control_image, prompt):
     )[0]
     return image
 
-def text_get_img(prompt):
+def text_get_img(prompt, room_id=None):
     # pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16)
     safetensors_file = '/nvme0n1-disk/civitai-downloader/STOIQOA/STOIQOAfroditeFLUXXL_F1DAlpha.safetensors'
     pipe = FluxPipeline.from_single_file(safetensors_file, torch_dtype=torch.bfloat16)
@@ -109,6 +140,7 @@ def text_get_img(prompt):
         guidance_scale=3.5,
         num_inference_steps=50,
         max_sequence_length=512,
+        callback_on_step_end=create_callback('1/2', room_id, 50),
         generator=torch.Generator("cpu").manual_seed(0)
     ).images[0]
     return image

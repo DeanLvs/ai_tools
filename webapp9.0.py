@@ -77,6 +77,20 @@ def handle_join_room(data):
     join_room(room_id)
     logger.info(f'User {session_id} joined room {room_id}')
 
+@socketio.on('add_core')
+def add_core(data):
+    room_id = data['roomId']
+    secKey = data['secKey']
+    logger.info(f'secKey is {room_id} {secKey}')
+    referrer_info = query_or_def(User(room_id))
+    if '666' == secKey:
+        user_vip_control(referrer_info, 10)
+        referrer_info = query_or_def(User(room_id))
+        notify_it('ws', 'processing_step_progress',
+                   {'text': f'积分兑换 成功！，您当前的积分 {referrer_info.vip_count}'}, to=room_id)
+    else:
+        notify_it('ws', 'processing_step_progress',
+                  {'text': f'积分兑换 失败？，您当还剩余积分 {referrer_info.vip_count}'}, to=room_id)
 @socketio.on('re_get')
 def handle_join_room(data):
     room_id = data['roomId']

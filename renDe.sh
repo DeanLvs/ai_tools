@@ -21,5 +21,5 @@ fi
 
 
 # 重启 webap
-nohup python3.10 -u dense_pose_api.py > xqpq.log 2>&1 &
+nohup python3.10 -u dense_pose_api.py > /nvme0n1-disk/book_yes/logs/dense_pose_api.log 2>&1 &
 echo "Webapp started."

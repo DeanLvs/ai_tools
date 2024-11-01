@@ -612,6 +612,10 @@
             });
 
             socket.on('processing_done', (data) => {
+                if(!data.processed_image_url){
+                     console.warn('processed_image_url is undefined or invalid');
+                     return;
+                }
                 const imageListDiv = document.getElementById('imageList');
                 if (!data.processed_image_url.startsWith('/uploads')) {
                     data.processed_image_url = '/uploads' + '/' + room_id + '/' + data.processed_image_url;
@@ -723,12 +727,12 @@
         function swap_face_b() {
             const filename = document.getElementById('filename').value;
             if (!filename || filename.trim() === '') {
-                alert('先选择一个要处理的图吧');
+                alert('先分别上传需要替换的两张人物图，依次分别 选择 后 点击[面部特征提取]后会提取到脸图 在选择 源脸 和 目标脸 配对 后 选择要换的图在来点击换脸哈');
                 // 这里可以添加其他处理逻辑，比如阻止表单提交等
                 return;
             }
             if (org_faces_name.length <= 0 || to_faces_name.length <= 0 || org_faces_name.length !== to_faces_name.length) {
-                alert('先选择需要交换的图片后，分别提取 面部特征后 选择 源脸 和 目标脸 配对');
+                alert('先分别上传需要替换的两张人物图，依次分别 选择 后 点击[面部特征提取]后会提取到脸图 在选择 源脸 和 目标脸 配对 后 选择要换的图在来点击换脸哈');
                 return;
             }
             topic = 'process_pic_swap_face';
@@ -828,6 +832,14 @@
             modalOverlay.style.display = 'none';
         }
 
+        function confirmSocre() {
+            const room_id = checkUUID();
+            checkSocket();
+            const secKey = document.getElementById('secKeyInput').value;
+            socket.emit('add_core', { secKey, roomId: room_id});
+            closeComOverlay();
+        }
+
         function confirmInput() {
             const userInput = document.getElementById('modalTextarea').value;
             console.log("User input:", userInput);
@@ -873,6 +885,14 @@
         function closeOverlay() {
             document.getElementById('overlay').style.display = 'none';
         }
+
+        function showComOverlay() {
+            document.getElementById('overlayInput').style.display = 'flex';
+        }
+
+        function closeComOverlay() {
+            document.getElementById('overlayInput').style.display = 'none';
+        }
     </script> <!-- 记得替换成你的JS文件路径 -->
 </head>
 <body>
@@ -893,9 +913,11 @@
                 </label>
                 <button class="small-button" onclick="processImage_inpaint_b()">换装</button>
                 <button class="small-button" onclick="showModal()">换场景</button>
-                <button class="small-button" onclick="check_face_b()">面部特征提取</button>
-                <button class="small-button" onclick="swap_face_b()">换脸</button>
+                <button class="small-button" onclick="check_face_b()">面部特征提取→</button>
+                <button class="small-button" onclick="swap_face_b()">→换脸</button>
                 <button class="small-button" onclick="viewImage()">查看历史</button>
+                <button class="small-button" onclick="showComOverlay()">积分兑换</button>
+
             </div>
             <input type="hidden" id="filename">
             <div class="progress-container">
@@ -925,16 +947,20 @@
 </div>
 
     <div class="overlay" id="overlay">
-    <div class="overlay-content">
-        <p>正在执行...请稍候...注意右侧 处理[进度条] 以及 消息通知</p>
-        <button onclick="closeOverlay()">确定</button>
+        <div class="overlay-content">
+            <p>正在执行...请稍候...注意右侧 处理[进度条] 以及 消息通知</p>
+            <button onclick="closeOverlay()">确定</button>
+        </div>
     </div>
+
+    <div class="overlay" id="overlayInput">
+        <div class="overlay-content">
+            <textarea id="secKeyInput" placeholder="输入兑换码"></textarea>
+            <button onclick="closeComOverlay()">取消</button>
+            <button onclick="confirmSocre()">确定</button>
+        </div>
     </div>
 <script>
-        document.getElementById('fileInput').addEventListener('change', function() {
-            uploadImage();
-        });
-
         function uploadImage() {
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];

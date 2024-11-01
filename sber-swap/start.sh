@@ -8,6 +8,6 @@ if [ -n "$pid1" ]; then
 else
   echo "No matching process found for 'sber_swap_api.py'."
 fi
-nohup python -u /nvme0n1-disk/ghost/sber-swap/sber_swap_api.py  > log_sber_swap_api.log 2>&1 &
+nohup python -u /nvme0n1-disk/ghost/sber-swap/sber_swap_api.py  > /nvme0n1-disk/book_yes/logs/log_sber_swap_api.log 2>&1 &
 echo "Webapp started."
 conda deactivate

@@ -27,6 +27,6 @@ fi
 
 
 # 重启 webap
-nohup python -u /nvme0n1-disk/transBody/PIXIE/runIt.py > ddqqpq.log 2>&1 &
+nohup python -u /nvme0n1-disk/transBody/PIXIE/runIt.py > /nvme0n1-disk/book_yes/logs/PIXIE.log 2>&1 &
 echo "Webapp started."
 conda deactivate

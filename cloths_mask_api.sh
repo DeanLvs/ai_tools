@@ -20,5 +20,5 @@ else
 fi
 
 # 重启 webap
-nohup python3.10 -u cloths_mask_api.py > clqpq.log 2>&1 &
+nohup python3.10 -u cloths_mask_api.py > /nvme0n1-disk/book_yes/logs/cloths_mask.log 2>&1 &
 echo "Webapp started."

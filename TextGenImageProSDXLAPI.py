@@ -809,7 +809,7 @@ def try_get_face(img_path):
     return re_images
 
 @app.post("/face")
-async def inpaint(
+async def inpaint_face(
     file_path: str = Form(...)
 ):
     logger.info(f'start find face -----{file_path}-----------')

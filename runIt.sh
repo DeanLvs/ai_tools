@@ -40,8 +40,6 @@ sh start.sh
 #conda activate ghost
 cd /nvme0n1-disk/ghost/sber-swap/
 sh start.sh
-cd /nvme0n1-disk/ghost/sber-swap/
-sh start.sh
 cd /nvme0n1-disk/ai_tools/SocAIty/face2face
 sh start.sh
 echo "Webapp started."

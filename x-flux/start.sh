@@ -15,5 +15,5 @@ else
 fi
 
 # 启动新的进程
-nohup python3 -u /nvme0n1-disk/flux/x-flux/mainApi.py > /nvme0n1-disk/flux/x-flux/flux_ip_gen_imgs.log 2>&1 &
+nohup python3 -u /nvme0n1-disk/flux/x-flux/mainApi.py > /nvme0n1-disk/book_yes/logs/flux_ip_gen_imgs.log 2>&1 &
 echo "Webapp started."

@@ -10,5 +10,5 @@ else
   echo "No matching process found for 'API.py'."
 fi
 
-nohup python3.10 -u /nvme0n1-disk/ai_tools/SocAIty/face2face/API.py > face_swap_faces.log 2>&1 &
+nohup python3.10 -u /nvme0n1-disk/ai_tools/SocAIty/face2face/API.py > /nvme0n1-disk/book_yes/logs/face_swap_faces.log 2>&1 &
 echo "Webapp started."

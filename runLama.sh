@@ -21,5 +21,5 @@ fi
 
 
 # 重启 webap
-nohup python3.10 -u lama_api.py > qpq.log 2>&1 &
+nohup python3.10 -u lama_api.py > /nvme0n1-disk/book_yes/logs/clear_lama.log 2>&1 &
 echo "Webapp started."

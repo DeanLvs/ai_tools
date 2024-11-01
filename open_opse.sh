@@ -21,5 +21,5 @@ fi
 
 
 # 重启 webap
-nohup python3.10 -u SingletonOpenposeDetector.py > oqpq.log 2>&1 &
+nohup python3.10 -u SingletonOpenposeDetector.py > /nvme0n1-disk/book_yes/logs/open_pose.log 2>&1 &
 echo "Webapp started."

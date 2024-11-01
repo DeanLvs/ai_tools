@@ -21,5 +21,5 @@ fi
 
 
 # 重启 webap
-nohup python3.10 -u TextGenImageProSDXLAPI.py > text_ip_gen.log 2>&1 &
+nohup python3.10 -u TextGenImageProSDXLAPI.py > /nvme0n1-disk/book_yes/logs/text_ip_gen.log 2>&1 &
 echo "Webapp started."

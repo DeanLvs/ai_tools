@@ -13,6 +13,6 @@ else
   echo "No matching process found for 'API.py'."
 fi
 
-nohup python -u /nvme0n1-disk/swapface/SimSwap/API.py > swap_faces.log 2>&1 &
+nohup python -u /nvme0n1-disk/swapface/SimSwap/API.py > /nvme0n1-disk/book_yes/logs/swap_faces.log 2>&1 &
 echo "Webapp started." 
 conda deactivate

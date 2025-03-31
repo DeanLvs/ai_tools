@@ -197,7 +197,7 @@ def get_rest_key():
     final_reply_markup = ReplyKeyboardMarkup(final_keyboard, one_time_keyboard=True, resize_keyboard=True)
     return final_reply_markup
 
-def resize_image(image_path, max_size=2048):
+def resize_image(image_path, max_size=4096):
     # 打开图片
     image = Image.open(image_path)
     width, height = image.size
@@ -282,3 +282,15 @@ def load_unfinished_tasks(queue_name, task_queue, room_image_manager):
         task['task_id'] = task_data['id']  # 将数据库中的 id 添加到任务数据中
         task_queue.put(task)  # 插入到任务队列
     logger.info(f"{len(tasks)} tasks loaded from the database into the queue.")
+
+def read_json_file():
+    # 读取json文件
+    with open('/nvme0n1-disk/book_yes/static/data.json', 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    return data
+
+def read_kami_file():
+    # 读取json文件
+    with open('/nvme0n1-disk/book_yes/static/kami.json', 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    return data

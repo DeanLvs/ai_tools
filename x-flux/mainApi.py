@@ -23,8 +23,8 @@ class FluxArguments:
         self.local_path = None
         self.repo_id = None
         self.name = None
-        self.ip_repo_id = 'XLabs-AI/flux-ip-adapter'
-        self.ip_name = 'flux-ip-adapter.safetensors'
+        self.ip_repo_id = 'XLabs-AI/flux-ip-adapter-v2'
+        self.ip_name = 'ip_adapter.safetensors'
         self.ip_local_path = None
         self.lora_repo_id = None
         self.lora_name = None

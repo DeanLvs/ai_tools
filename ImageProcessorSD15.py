@@ -15,7 +15,7 @@ class CustomInpaintPipeline:
         if cls._instance is None:
             cls._instance = super(CustomInpaintPipeline, cls).__new__(cls)
         return cls._instance
-    def __init__(self, model_path="/mnt/sessd/h_cache/hub/models--runwayml--stable-diffusion-v1-5/snapshots/1d0c4ebf6ff58a5caecab40fa1406526bca4b5b9",
+    def __init__(self, model_path="/Users/dean/sd15/stable-diffusion-v1-5",
                  controlnet_list_t = ['key_points'], use_out_test = False):
         if not hasattr(self, "_initialized"):
             self.cache = {}  # 内存缓存字典
@@ -25,30 +25,32 @@ class CustomInpaintPipeline:
             self.controlnet_list = controlnet_list_t #,'depth','canny','key_points','depth',,'seg'
             self.text_device = self.device
             # 手动加载第一个文本编码器
-            text_encoder = CLIPTextModel.from_pretrained(os.path.join(self.model_path, "text_encoder"), torch_dtype=torch.float16).to(self.text_device)
+            text_encoder = CLIPTextModel.from_pretrained(os.path.join(self.model_path, "text_encoder")).to(self.text_device) # , torch_dtype=torch.float16
             # 手动加载第一个分词器
             tokenizer = CLIPTokenizer.from_pretrained(os.path.join(self.model_path, "tokenizer"))
             self.text_encoder = text_encoder
             self.tokenizer = tokenizer
             self._print_component_load_info("Text Encoder 1", text_encoder)
             self.pipe = self._initialize_pipe()
-            weights_path = "/mnt/fast/civitai-downloader/pornmasterPro_v9VAE.safetensors"
+            weights_path = "/Users/dean/sd15/uberRealisticPornMerge_v23Final.safetensors"
             self.load_model_weights(weights_path)
         print('suc lora')
     def _initialize_pipe(self):
         # 手动加载调度器
-        scheduler = PNDMScheduler.from_pretrained(os.path.join(self.model_path, "scheduler"),  use_karras_sigmas=True)
-        vae = AutoencoderKL.from_pretrained(os.path.join(self.model_path, "vae"), torch_dtype=torch.float16).to(self.device)
+        # scheduler = PNDMScheduler.from_pretrained(os.path.join(self.model_path, "scheduler")) # ,  use_karras_sigmas=True
+        scheduler = DPMSolverMultistepScheduler.from_pretrained(os.path.join(self.model_path, "scheduler"),
+                                                                solver_order=2, algorithm_type="sde-dpmsolver++",
+                                                                use_karras_sigmas=True)
+        vae = AutoencoderKL.from_pretrained(os.path.join(self.model_path, "vae")).to(self.device) # , torch_dtype=torch.float16
         # 手动加载 UNet
-        unet = UNet2DConditionModel.from_pretrained(os.path.join(self.model_path, "unet"), torch_dtype=torch.float16).to(self.device)
+        unet = UNet2DConditionModel.from_pretrained(os.path.join(self.model_path, "unet")).to(self.device) #, torch_dtype=torch.float16
         # # 将各组件的键写入文件
-        self._write_keys_to_file("vae_keys.txt", vae.state_dict().keys())
-        self._write_keys_to_file("unet_keys.txt", unet.state_dict().keys())
+        # self._write_keys_to_file("vae_keys.txt", vae.state_dict().keys())
+        # self._write_keys_to_file("unet_keys.txt", unet.state_dict().keys())
         self._print_component_load_info("UNet", unet)
         self._print_component_load_info("VAE", vae)
         print(f"total keys: {len(unet.state_dict().keys()) + len(vae.state_dict().keys())} "
               f"text_encoder keys:  {len(self.text_encoder.state_dict().keys())} ")
-
         controlnet_init_list = []
         for controlnet_item in self.controlnet_list:
             if 'key_points' == controlnet_item:
@@ -70,8 +72,8 @@ class CustomInpaintPipeline:
             to_controlnet = controlnet_init_list[0]
         else:
             to_controlnet = controlnet_init_list
-        pipe = StableDiffusionControlNetPipeline(
-            controlnet=to_controlnet,
+        pipe = StableDiffusionPipeline(
+            # controlnet=to_controlnet,
             vae=vae,
             text_encoder=self.text_encoder,
             tokenizer=self.tokenizer,
@@ -80,18 +82,6 @@ class CustomInpaintPipeline:
             feature_extractor=None,
             safety_checker=None
         )
-
-        # pipe = StableDiffusionPipeline(
-        #     # controlnet=to_controlnet,
-        #     vae=vae,
-        #     text_encoder=self.text_encoder,
-        #     tokenizer=self.tokenizer,
-        #     unet=unet,
-        #     scheduler=scheduler,
-        #     feature_extractor=None,
-        #     safety_checker=None
-        # )
-
         pipe.to(self.device)
         return pipe
     def _write_keys_to_file(self, filename, keys):
@@ -183,18 +173,18 @@ class CustomInpaintPipeline:
 
     def generate_image(self, prompt="a sexy milf",
                        reverse_prompt="",#deformed, bad anatomy, mutated, long neck, narrow Hips
-                       num_inference_steps = 50, seed = 178, guidance_scale = 6,progress_callback=None,
-                       strength=0.9, control_image=None, controlnet_conditioning_scale=None):
+                       num_inference_steps = 40, seed = 178, guidance_scale = 6, progress_callback=None,
+                       strength=1.0, control_image=None, controlnet_conditioning_scale=None):
         torch.manual_seed(seed)
         result = self.pipe(
                 prompt = prompt,
                 negative_prompt= reverse_prompt,
                 num_inference_steps=num_inference_steps,
-                guidance_scale=guidance_scale,
+                # guidance_scale=guidance_scale,
                 callback=progress_callback,
-                strength=strength,
-                image=control_image,
-                controlnet_conditioning_scale=controlnet_conditioning_scale,
+                # strength=strength,
+                # image=control_image,
+                # controlnet_conditioning_scale=controlnet_conditioning_scale,
                 # padding_mask_crop=32,
                 callback_steps=1  # 调用回调的步数
             ).images[0]
@@ -202,10 +192,12 @@ class CustomInpaintPipeline:
         gc.collect()
         return result
 if __name__ == '__main__':
-    pippres = CustomInpaintPipeline()
-    clear_org_i = Image.open("images_openpose.png").convert("RGB")
-    control_image = [clear_org_i]
-    controlnet_conditioning_scale = 1.0
-    img = pippres.generate_image(control_image = control_image, controlnet_conditioning_scale = controlnet_conditioning_scale)
-    img.save('xxxxxiiddaa.png')
+    pip = CustomInpaintPipeline(controlnet_list_t = [])
+    # clear_org_i = Image.open("images_openpose.png").convert("RGB")
+    # control_image = [clear_org_i]
+    # controlnet_conditioning_scale = 1.0
+    img = pip.generate_image(
+        prompt="sexy woman , this woman is milf, big breasts, nip slip, gym, white short skirt, "
+               "ass, showing pussy, clean realistic face, 4K, standing on the street", reverse_prompt = "")
+    img.save('miffffbbxxbff.png')
 

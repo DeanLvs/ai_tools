@@ -3,9 +3,12 @@ sh renDe.sh
 sh runLama.sh
 sh open_opse.sh
 sh depth_es.sh
+sh cloths_mask_api.sh
+sh ip_text_gen_img.sh
+sh /nvme0n1-disk/transBody/PIXIE/run.sh
 # 获取进程ID
-pid1=$(ps -ef | grep '/usr/local/bin/python3.10 webapp9.0.py' | grep -v grep | awk '{print $2}')
-pid2=$(ps -ef | grep 'python3.10 -u webapp9.0.py' | grep -v grep | awk '{print $2}')
+pid1=$(ps -ef | grep 'python webapp9.0.py' | grep -v grep | awk '{print $2}')
+pid2=$(ps -ef | grep 'python -u webapp9.0.py' | grep -v grep | awk '{print $2}')
 
 # 检查进程ID是否存在并杀掉进程
 if [ -n "$pid1" ]; then
@@ -53,5 +56,7 @@ rm -rf $src_dir
 mkdir -p $src_dir
 
 # 重启 webap
-nohup python3.10 -u webapp9.0.py &
+nohup python -u webapp9.0.py &
 echo "Webapp started."
+cd /nvme0n1-disk/ai_tools/SocAIty/face2face
+sh start.sh

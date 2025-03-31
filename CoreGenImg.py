@@ -144,7 +144,7 @@ def gen_fix_pic(file_path, file_i, mask_i, not_close_mask_img, extracted_texture
         mask_clear = clear_mask
         mask_np = np.array(mask_clear)
         print(f'start LaMaModel remove closes')
-        model_instance = LaMaModel(model_path='/mnt/sessd/ai_tools/Inpaint-Anything/big-lama')
+        model_instance = LaMaModel(model_path='/nvme0n1-disk/ai_tools/Inpaint-Anything/big-lama')
         clear_result, success_is = model_instance.predict(file_path, None, mask_clear)
         print(f'success LaMaModel remove closes')
         # fix_f_gen_path = os.path.join(app.config['UPLOAD_FOLDER'], 'clear_f_' + file_name)

@@ -100,7 +100,7 @@ class CustomInpaintPipeline:
             # self.load_lora_weights(lora_path="/nvme0n1-disk/civitai-downloader/lora/biggunsxl_v11.safetensors", lora_scale=0.5, adapter_name="bigsxiiiixxl")
             # self.load_lora_weights(lora_path="/nvme0n1-disk/civitai-downloader/lora/SDXL_DatAss_v1.safetensors", lora_scale=0.7, adapter_name="datass")
             # self.load_lora_weights(lora_path="/nvme0n1-disk/civitai-downloader/lora/Realistic_Pussy_Xl-000010.safetensors", lora_scale=0.8, adapter_name="pppussy")
-            self.load_lora_weights_base(lora_path="/nvme0n1-disk/civitai-downloader/lora/nudify_xl.safetensors", lora_scale=0.6, adapter_name="binu")
+#            self.load_lora_weights_base(lora_path="/nvme0n1-disk/civitai-downloader/lora/nudify_xl.safetensors", lora_scale=0.6, adapter_name="binu")
         logger.info('suc lora')
 
     def release_resources(self):

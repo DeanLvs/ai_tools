@@ -7,9 +7,7 @@ import threading
 
 sys.path.append('/mnt/sessd/usr/local/lib/python3.10/site-packages/')
 from diffusers.models.lora import adjust_lora_scale_text_encoder
-from diffusers.loaders import (
-    TextualInversionLoaderMixin,
-)
+from diffusers.loaders.textual_inversion import TextualInversionLoaderMixin
 cache = {}
 cache_lock = threading.Lock()
 def generate_cache_key(prompt, prompt_2, negative_prompt, negative_prompt_2, lora_scale):

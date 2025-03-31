@@ -1,7 +1,7 @@
 import os,json,uuid
 from downloadC import download_file_c
-from BookYesCommon import load_unfinished_tasks, User, get_rest_key, resize_image, add_task_list, glob_task_positions, video_task_positions, glob_task_queue, task_vide_queue
-from CoreService import handle_image_processing_b
+from BookYesCommon import read_kami_file, load_unfinished_tasks, User, get_rest_key, resize_image, add_task_list, glob_task_positions, video_task_positions, glob_task_queue, task_vide_queue
+from CoreService import handle_image_processing_b, get_prompt_map
 import time
 import threading
 from CoreDb import RoomImageManager, user_states_control, query_or_def, user_vip_control
@@ -16,7 +16,7 @@ from TelRoboApp import queue_tel_consumer, run_telegram_bot, notify_it as tel_no
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/nvme0n1-disk/book_yes/static/uploads'
 app_path = app.config['UPLOAD_FOLDER']
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Dictionary to store processed results
@@ -81,13 +81,18 @@ def handle_join_room(data):
 def add_core(data):
     room_id = data['roomId']
     secKey = data['secKey']
-    logger.info(f'secKey is {room_id} {secKey}')
+    kami_map = read_kami_file()
+    codeKey = secKey.rstrip().lstrip().strip()
+    codeKey = str(codeKey).replace(' ','')
+    logger.info(f"user {room_id} try check {codeKey} to add")
     referrer_info = query_or_def(User(room_id))
-    if '666' == secKey:
-        user_vip_control(referrer_info, 10)
+    if codeKey in kami_map:
+        add_count_v = int(kami_map[codeKey])
+        logger.info(f"user {room_id} try check {codeKey} and {add_count_v}to add")
+        user_vip_control(referrer_info, add_count_v)
         referrer_info = query_or_def(User(room_id))
         notify_it('ws', 'processing_step_progress',
-                   {'text': f'积分兑换 成功！，您当前的积分 {referrer_info.vip_count}'}, to=room_id)
+                  {'text': f'积分兑换 成功！，您当前的积分 {referrer_info.vip_count}'}, to=room_id)
     else:
         notify_it('ws', 'processing_step_progress',
                   {'text': f'积分兑换 失败？，您当还剩余积分 {referrer_info.vip_count}'}, to=room_id)
@@ -299,6 +304,13 @@ def inpaint():
     # 返回响应
     return jsonify({'status': 'success', 'message': 'Data received successfully'})
 
+@app.route('/api/getkeys', methods=['GET'])
+def get_keys():
+    # 读取JSON文件并返回键的列表
+    data = get_prompt_map()
+    keys = list(data.keys())
+    return jsonify(keys)
+
 
 @app.route('/api/rep_upload_face', methods=['POST'])
 def rep_upload_face():
@@ -324,11 +336,11 @@ def uploaded_file(room_id, filename):
 # 路由来提供你的 CSS 文件
 @app.route('/css/<filename>')
 def send_css(filename):
-    return send_from_directory('/mnt/sessd/ai_tools/templates/css', filename)
+    return send_from_directory('/nvme0n1-disk/ai_tools/templates/css', filename)
 # 路由来提供你的 CSS 文件
 @app.route('/js/<filename>')
 def send_js(filename):
-    return send_from_directory('/mnt/sessd/ai_tools/templates/js', filename)
+    return send_from_directory('/nvme0n1-disk/ai_tools/templates/js', filename)
 
 
 @socketio.on('process_image_b')
@@ -523,7 +535,7 @@ if __name__ == '__main__':
     consumer_thread.start()
 
     # 运行 Telegram bot 在主线程
-    run_telegram_bot()
+    # run_telegram_bot()
 
     # 等待线程完成
     telegram_thread.join()

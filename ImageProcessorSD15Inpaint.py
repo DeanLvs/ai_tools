@@ -1,4 +1,6 @@
 from PIL import Image
+from closeMaskIt import save_binary_clothing_mask
+from PIL import Image, ImageOps, ImageFilter
 import os
 import torch
 import gc,json
@@ -15,7 +17,7 @@ class CustomInpaintPipeline:
         if cls._instance is None:
             cls._instance = super(CustomInpaintPipeline, cls).__new__(cls)
         return cls._instance
-    def __init__(self, model_path="/mnt/sessd/h_cache/hub/models--benjamin-paine--stable-diffusion-v1-5-inpainting/snapshots/f8e1740bdc31fead8921a27f3b3b2a051d0817d0",
+    def __init__(self, model_path="/Users/dean/sd15/stable-diffusion-v1-5-inpainting",
                  controlnet_list_t = [], use_out_test = False):#,'depth'
         if not hasattr(self, "_initialized"):
             self.cache = {}  # 内存缓存字典
@@ -26,14 +28,15 @@ class CustomInpaintPipeline:
             self.controlnet_list = controlnet_list_t #,'depth','canny','key_points','depth',,'seg'
             self.text_device = self.device
             # 手动加载第一个文本编码器
-            text_encoder = CLIPTextModel.from_pretrained(os.path.join(self.model_path, "text_encoder"), torch_dtype=torch.float16).to(self.text_device)
+            text_encoder = CLIPTextModel.from_pretrained(os.path.join(self.model_path, "text_encoder")).to(self.text_device) #, torch_dtype=torch.float16
             # 手动加载第一个分词器
             tokenizer = CLIPTokenizer.from_pretrained(os.path.join(self.model_path, "tokenizer"))
             self.text_encoder = text_encoder
             self.tokenizer = tokenizer
             self._print_component_load_info("Text Encoder 1", text_encoder)
             self.pipe = self._initialize_pipe()
-            weights_path = "/mnt/fast/civitai-downloader/pornmasterPro_v9VAE-inpainting.safetensors"
+            # weights_path = "/Users/dean/sd15/pornmasterProFULLV4_fullV4-inpainting.safetensors"
+            weights_path = "/Users/dean/sd15/pornmasterProV8_v8-inpainting.safetensors"
             self.load_model_weights(weights_path)
         print('suc lora')
     def _initialize_pipe(self):
@@ -43,9 +46,9 @@ class CustomInpaintPipeline:
         # scheduler = PNDMScheduler.from_pretrained(os.path.join(self.model_path, "scheduler"),  use_karras_sigmas=True)
         scheduler = DPMSolverMultistepScheduler.from_pretrained(os.path.join(self.model_path, "scheduler"), solver_order=2, algorithm_type="dpmsolver++", use_karras_sigmas=True)
         # scheduler = PNDMScheduler.from_pretrained(os.path.join(self.model_path, "scheduler"), use_karras_sigmas=True)
-        vae = AutoencoderKL.from_pretrained(os.path.join(self.model_path, "vae"), torch_dtype=torch.float16).to(self.device)
+        vae = AutoencoderKL.from_pretrained(os.path.join(self.model_path, "vae")).to(self.device) # , torch_dtype=torch.float16
         # 手动加载 UNet
-        unet = UNet2DConditionModel.from_pretrained(os.path.join(self.model_path, "unet"), torch_dtype=torch.float16).to(self.device)
+        unet = UNet2DConditionModel.from_pretrained(os.path.join(self.model_path, "unet")).to(self.device) # , torch_dtype=torch.float16
         # # 将各组件的键写入文件
         self._write_keys_to_file("vae_keys.txt", vae.state_dict().keys())
         self._write_keys_to_file("unet_keys.txt", unet.state_dict().keys())
@@ -195,8 +198,8 @@ class CustomInpaintPipeline:
 
     def generate_image(self, image=None, mask_image = None, prompt="R/nsfw,nude,person,big and natural asses,big and natural boobs",
                        reverse_prompt="no deformed limbs,no disconnected limbs,unnaturally contorted position,no elongated waists, unrealistic features,overly exaggerated body parts,incorrect proportions, no multiple belly buttons",#deformed, bad anatomy, mutated, long neck, narrow Hips
-                       num_inference_steps = 50, seed = 178, guidance_scale = 7,progress_callback=None,
-                       strength=0.922, control_image=None, controlnet_conditioning_scale=None):
+                       num_inference_steps = 30, seed = 178, guidance_scale = 9.0,progress_callback=None,
+                       strength=0.9, control_image=None, controlnet_conditioning_scale=None):
         torch.manual_seed(seed)
         result = self.pipe(
                 image = image,
@@ -345,7 +348,7 @@ class CustomInpaintPipeline:
             gc.collect()
         return resultTemp, gen_it_prompt
 
-if __name__ == '__main__':
+def total_test():
     pippres = CustomInpaintPipeline()
     image = Image.open("filled_image_pil_IMG_5118.jpeg").convert("RGB")
     mask_image = Image.open("filled_use_mask_image_pil_IMG_5118.jpeg").convert("L")
@@ -361,4 +364,116 @@ if __name__ == '__main__':
     img = pippres.generate_image(image=image, mask_image=mask_image, control_image=control_image,
                                  controlnet_conditioning_scale=controlnet_conditioning_scale)
     img.save('511851185118-ORG.png')
+def resize_with_padding(image, save_path, target_size=(512, 512)):
+    """
+    调整图像到目标尺寸，保持内容比例，使用黑色填充，并保存到指定路径。
+
+    参数:
+        image (PIL.Image): 输入图像。
+        save_path (str): 保存图像的路径。
+        target_size (tuple): 目标尺寸，默认是 (512, 512)。
+
+    返回:
+        str: 保存的图像路径。
+    """
+    original_width, original_height = image.size
+    target_width, target_height = target_size
+
+    # 判断是否需要缩放
+    if original_width > target_width or original_height > target_height:
+        # 找到需要缩放到 512 的比例
+        scale = min(target_width / original_width, target_height / original_height)
+        new_width = int(original_width * scale)
+        new_height = int(original_height * scale)
+        image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+    # 填充图像到 512x512
+    delta_w = target_width - image.size[0]
+    delta_h = target_height - image.size[1]
+    padding = (delta_w // 2, delta_h // 2, delta_w - delta_w // 2, delta_h - delta_h // 2)
+    new_image = ImageOps.expand(image, padding, fill=0)
+
+    # 保存处理后的图像
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)  # 确保保存目录存在
+    new_image.save(save_path)
+
+    return save_path
+import os
+import numpy as np
+from PIL import Image
+
+
+def blend_images_using_mask(image1_path, image2_path, mask_path, save_path):
+    """
+    使用二值掩码将两张图像进行裁剪并合并。
+
+    参数:
+        image1_path (str): 第一张图像路径（前景图）。
+        image2_path (str): 第二张图像路径（背景图）。
+        mask_path (str): 掩码图像路径（原始应该为0和255的二值图）。
+        save_path (str): 合成图像的保存路径。
+
+    返回:
+        str: 保存的合成图像路径。
+    """
+    # 读取图像
+    image1 = Image.open(image1_path).convert("RGBA")
+    image2 = Image.open(image2_path).convert("RGBA")
+    mask = Image.open(mask_path).convert("L")
+
+    # 确保尺寸一致
+    image2 = image2.resize(image1.size, Image.Resampling.LANCZOS)
+    mask = mask.resize(image1.size, Image.Resampling.LANCZOS)
+
+    # 优化掩码：先用中值滤波去除噪点，再阈值二值化
+    mask = mask.filter(ImageFilter.MedianFilter(size=3))
+    mask = mask.point(lambda p: 255 if p > 128 else 0)
+
+    # 转换为 numpy 数组
+    image1_array = np.array(image1)
+    image2_array = np.array(image2)
+    mask_array = np.array(mask)
+
+    # 生成透明前景：保留 mask == 255 的区域
+    foreground = np.zeros_like(image1_array, dtype=np.uint8)
+    foreground[mask_array == 255] = image1_array[mask_array == 255]
+
+    # 生成透明背景：保留 mask == 0 的区域
+    background = np.zeros_like(image2_array, dtype=np.uint8)
+    background[mask_array == 0] = image2_array[mask_array == 0]
+
+    # 合并前景和背景
+    blended_image = Image.alpha_composite(Image.fromarray(background), Image.fromarray(foreground))
+
+    # 保存合成结果
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    blended_image.save(save_path)
+
+    return save_path
+
+def handls(pic_name, pic_type):
+    # /Users/dean/Desktop/xxxxddd.jpeg
+    img_path = "/Users/dean/Downloads/" + pic_name + pic_type
+    image = Image.open(img_path).convert("RGB")
+    out_pic = 'output_masks/' + pic_name + pic_type
+    img_path = resize_with_padding(image, out_pic)
+    image = Image.open(img_path).convert("RGB")
+    mask_image_path = save_binary_clothing_mask(img_path)
+    mask_image = Image.open(mask_image_path).convert("L")
+    pippres = CustomInpaintPipeline()
+    img = pippres.generate_image(image=image, mask_image=mask_image, control_image=None,
+                                 controlnet_conditioning_scale=None)
+
+    save_name = pic_name +'-org'+'.png'
+    img.save(save_name)
+    return save_name,out_pic, mask_image_path
+
+if __name__ == '__main__':
+    # IMG_4924.PNG IMG_4909.JPG IMG_4938.PNG IMG_4924.PNG
+    pic_name = "IMG_4924"
+    pic_type = ".PNG"
+    save_name, out_pic, mask_image_path = handls(pic_name, pic_type)
+    blend_images_using_mask(save_name, out_pic, mask_image_path, "./" + pic_name + ".png")
+
+
 

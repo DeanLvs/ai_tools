@@ -42,8 +42,7 @@ make -j $(nproc)  # 并行编译，使用 CPU 的所有核心
 
 python3.10 -m pip install --upgrade pip
 
-pip3.10 install -r requirements.txt
-
+pip3.10 install -r installed_packages.txt
 
 conda env create -f ghost_environment.yml
 #conda env create -f icon_environment.yml
@@ -68,6 +67,7 @@ source /opt/rh/gcc-toolset-11/enable
 export PATH=/usr/local/cuda/bin:$PATH
 export PATH=$PATH:/nvme0n1-disk/installBase/ffmpeg-7.0.2-amd64-static
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+export HF_ENDPOINT=https://hf-mirror.com
 export HF_HOME=/nvme0n1-disk/h_cache
 export TORCH_HOME=/nvme0n1-disk/t_cache
 export TRANSFORMERS_CACHE=/nvme0n1-disk/tr_cache

@@ -824,6 +824,7 @@
                 return;
             }
             const modalOverlay = document.getElementById('modalOverlay');
+            loadButtons();
             modalOverlay.style.display = 'flex';
         }
 
@@ -893,6 +894,36 @@
         function closeComOverlay() {
             document.getElementById('overlayInput').style.display = 'none';
         }
+
+        // 获取并填充按钮
+        function loadButtons() {
+            fetch('/api/getkeys', { method: 'GET' })
+                .then(response => response.json())
+                .then(keys => {
+                    const configPrompt = document.getElementById('config_prompt');
+                    configPrompt.innerHTML = ''
+                    const poDiv = document.createElement('div');
+                    poDiv.textContent = '快捷场景，点完直接 开始生成即可';
+                    configPrompt.appendChild(poDiv);
+                    keys.forEach(key => {
+                        // 创建按钮并设置事件
+                        const button = document.createElement('button');
+                        button.textContent = key;
+                        button.onclick = () => changeText(key);
+                        configPrompt.appendChild(button);
+                    });
+
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // 更改文本内容的函数
+        function changeText(key) {
+            console.log('Clicked button with key:', key);
+            document.getElementById('modalTextarea').value=key;
+            // 处理点击后的逻辑，例如将key的值展示在某个地方
+        }
+
     </script> <!-- 记得替换成你的JS文件路径 -->
 </head>
 <body>
@@ -939,6 +970,8 @@
     </div>
     <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
+        <div class="modal" id="config_prompt">
+        </div>
         <textarea id="modalTextarea" placeholder="选择的图片有多个人时，会随机选择生成，可以先点击[面部特征提取]后选择生成的脸部图片，再[换场景], 你可以在这里输入想要的场景内容..."></textarea>
         <button onclick="confirmInput()">使用1.0版本(生成6张图)</button>
         <button onclick="confirmInputFlux()">使用1.2版本(生成1图)</button>

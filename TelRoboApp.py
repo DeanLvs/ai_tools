@@ -3,9 +3,9 @@ from telegram import ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from book_yes_logger_config import logger
-from CoreService import get_rest_key, req_get_face
+from CoreService import get_prompt_map, get_rest_key, req_get_face
 from CoreDb import RoomImageManager, query_or_def, user_states_control, user_vip_control
-from BookYesCommon import resize_image, add_task_list, glob_task_positions, video_task_positions, glob_task_queue, task_vide_queue, User
+from BookYesCommon import read_kami_file, resize_image, add_task_list, glob_task_positions, video_task_positions, glob_task_queue, task_vide_queue, User
 import threading, os, asyncio, queue, uuid, shutil
 from tenacity import retry, stop_after_attempt, wait_fixed
 app_path = '/nvme0n1-disk/book_yes/static/uploads'
@@ -226,6 +226,8 @@ def trans_status(status_key):
         return '等带输入待处理内容媒体内容'
     if status_key == 'awaiting_input':
         return '等带输入待处理内容媒体内容'
+    if status_key == 'code_check':
+        return '等带输入卡密对话book值'
     return '暂无'
 def trans_channel(channel_key):
     if channel_key=='dress_up':
@@ -239,6 +241,22 @@ def trans_channel(channel_key):
     if channel_key=='flux_txt_to_image':
         return '👑Flux模型自定义情景（更好的语意理解）'
     return '未选择模型'
+def qingjinKey(filename):
+    data = get_prompt_map()
+    keys = list(data.keys())
+    chose_input_key = []
+    keyboard = []
+    re_set_index = 0
+    for idx, text_key in enumerate(keys):
+        if re_set_index >= 2:
+            re_set_index = 0
+            keyboard.append(chose_input_key)
+            chose_input_key = []
+        re_set_index = re_set_index + 1
+        chose_input_key.append(InlineKeyboardButton("场景:" + text_key, callback_data=f"tt_t_i__{idx}t_i_{filename}"))
+    if len(chose_input_key) > 0:
+        keyboard.append(chose_input_key)
+    return keyboard
 async def handle_photo(update: Update, context) -> None:
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
@@ -309,24 +327,22 @@ async def handle_photo(update: Update, context) -> None:
             logger.info('not find any face')
             await update.message.reply_text(f'{filename} 未识别到人脸')
             return
+        keyboard = qingjinKey(filename)
+        inp_key = []
         if len(face_images) == 1:
-            keyboard = [
-                [
-                    InlineKeyboardButton("输入情景", callback_data=f"t_i_{filename}")
-                ]
-            ]
+            inp_key.append(InlineKeyboardButton("点我后自行输入描述情景(越详细越好)", callback_data=f"t_i_{filename}"))
+            keyboard.append(inp_key)
             reply_markup = InlineKeyboardMarkup(keyboard)
             logger.info(f'{filename}要如何处理该图片')
             # 通知用户图片已经保存，并提供选择框
             await update.message.reply_text(f'{filename} 要如何处理该图片', reply_markup=reply_markup)
             return
+        inp_key.append(InlineKeyboardButton("检测到多人点我可选择主角", callback_data=f"f_i_{filename}"))
+        keyboard.append(inp_key)
+        inp_key = []
+        inp_key.append(InlineKeyboardButton("直接选择场景或点我后输入描述情景", callback_data=f"t_i_{filename}"))
         # 创建 InlineKeyboard 按钮
-        keyboard = [
-            [
-                InlineKeyboardButton("检测到多人可选择主角", callback_data=f"f_i_{filename}"),
-                InlineKeyboardButton("或直接输入情景", callback_data=f"t_i_{filename}")
-            ]
-        ]
+        keyboard.append(inp_key)
         reply_markup = InlineKeyboardMarkup(keyboard)
         # 通知用户图片已经保存，并提供选择框
         await update.message.reply_text(f'{filename} 要如何处理该图片', reply_markup=reply_markup)
@@ -396,6 +412,28 @@ async def handle_wel_user(update: Update, context) -> None:
                 )
     # 欢迎新用户
     await update.message.reply_text("欢迎使用，您可以在 🤖AI功能切换 中选择要使用的功能 然后按照提示操作即可，当前为试运行阶段，仅用于科研目的，请注意合法合规使用，尊重他人隐私。", reply_markup=get_rest_key())
+
+def handler_gen_text(text, filename, room_id, user_info) -> None:
+    logger.info(f'answer it is {room_id}')
+    data = {'def_skin': '909', 'prompt': text,
+            'reverse_prompt': ''}
+    data['notify_type'] = 'tel'
+    data['filename'] = filename
+    data['face_filename'] = ''
+    data['roomId'] = room_id
+    if 'flux_txt_to_image' == user_info.channel:
+        data['gen_type'] = 'flux'
+    else:
+        data['gen_type'] = ''
+    logger.info(f'get req is {data}')
+    # 创建实例
+    room_image_manager = RoomImageManager()
+    add_task_list(data, 'tel_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it,
+                  room_image_manager=room_image_manager, user_info=user_info)
+    user_info.status = ''
+    # 完成处理后，清除用户的状态
+    user_states_control(user_info)
+
 # 处理文本消息
 async def handle_message(update: Update, context) -> None:
     user_id = update.effective_user.id
@@ -491,46 +529,51 @@ async def handle_message(update: Update, context) -> None:
         )
         return
     if text == '增加book值':
+        user_info.status = 'code_check'
+        # 创建实例
+        room_image_manager = RoomImageManager()
+        room_image_manager.update_user(user_info)
         await update.message.reply_text(
-            f'您的剩余book值{user_info.vip_count}，暂无购买增加book值功能', reply_markup=get_rest_key())
+            f'可访问 https://www.sdfkw.xyz/links/A683B752 购买卡密兑换码，购买完成 回到此[增加book值]之后输入即可兑换成功，现在即可输入[卡号]+[密码]，例：A2C3B3D4D9NN sweqwesa@!23 ', reply_markup=get_rest_key())
         return
     if text == '❓帮助':
         await update.message.reply_text(
-            f'本机器人为AI图片处理机器人，您可以在 🤖AI功能切换 中选择要使用的功能 然后按照提示操作即可，如遇到任何问题可重新选择🤖AI功能切换来重置设置，继续体验，部分时刻如因网络问题无法获取处理结果，可在 🗄查看历史 中重复获取查看最近20张处理图片', reply_markup=get_rest_key())
+            f'本机器人为AI图片处理机器人，您可以在 🤖AI功能切换 中选择要使用的功能 然后按照提示操作即可，如遇到任何问题可重新选择🤖AI功能切换来重置设置，继续体验，部分时刻如因网络问题无法获取处理结果，可在 🗄查看历史 中重复获取查看最近20张处理图片，感兴趣可以加技术交流账号', reply_markup=get_rest_key())
         return
     if text == '📢公告':
         await update.message.reply_text(
-            f'本机器人为AI图片处理机器人，您可以在 🤖AI功能切换 中选择要使用的功能 然后按照提示操作即可，当前为试运行阶段，仅用于科研目的，请注意合法合规使用，尊重他人隐私。',
+            f'本机器人为AI图片处理机器人，您可以在 🤖AI功能切换 中选择要使用的功能 然后按照提示操作即可，当前为试运行阶段，感兴趣可以加技术交流账号，仅用于科研目的，请注意合法合规使用，尊重他人隐私。',
             reply_markup=get_rest_key())
         return
     if text == '技术交流':
         await update.message.reply_contact(
             '573244218219','Li','Dream',
             reply_markup=get_rest_key())
+    if user_info.status == 'code_check':
+        kami_map = read_kami_file()
+        codeKey = text.rstrip().lstrip().strip()
+        codeKey = str(codeKey).replace(' ', '')
+        logger.info(f"user {user_id} try check {codeKey} to add")
+        if codeKey in kami_map:
+            add_count_v = int(kami_map[codeKey])
+            logger.info(f"user {user_id} try check {codeKey} and {add_count_v}to add")
+            user_vip_control(user_info, add_count_v)
+            user_info = query_or_def(User(user_id, room_id))  # 获取用户唯一 ID
+            await update.message.reply_text(
+                f'可访问 https://www.sdfkw.xyz/links/A683B752 购买卡密兑换码，充值成功，当前book值：{user_info.vip_count}，可以下方切换功能体验吧！',
+                reply_markup=get_rest_key())
+        else:
+            await update.message.reply_text(
+                f'可访问 https://www.sdfkw.xyz/links/A683B752 购买卡密兑换码，对话失败，请确认卡密内容重新输入 或 点击[技术交流]联系咨询：',
+                reply_markup=get_rest_key())
+
     if 'special_effects' == user_info.channel or 'flux_txt_to_image' == user_info.channel:
         # 检查用户状态
         if user_info.status == 'awaiting_input':
             filename = user_info.file_name
             # 处理用户输入的文本
             await update.message.reply_text(f"你输入的情景是: {text} 开始生成 {filename}")
-            logger.info(f'answer it is {room_id}')
-            data = {'def_skin': '909', 'prompt': text,
-                    'reverse_prompt': ''}
-            data['notify_type'] = 'tel'
-            data['filename'] = filename
-            data['face_filename'] = ''
-            data['roomId'] = room_id
-            if 'flux_txt_to_image' == user_info.channel:
-                data['gen_type'] = 'flux'
-            else:
-                data['gen_type'] = ''
-            logger.info(f'get req is {data}')
-            # 创建实例
-            room_image_manager = RoomImageManager()
-            add_task_list(data, 'tel_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
-            user_info.status=''
-            # 完成处理后，清除用户的状态
-            user_states_control(user_info)
+            handler_gen_text(text, filename, room_id, user_info)
             return
         if user_info.status == 'only_face_awaiting_input':
             filename = user_info.file_name
@@ -543,6 +586,7 @@ async def handle_message(update: Update, context) -> None:
             data['filename'] = filename
             data['face_filename'] = filename
             data['roomId'] = room_id
+            data['gen_type'] = ''
             if 'flux_txt_to_image' == user_info.channel:
                 data['gen_type'] = 'flux'
             logger.info(f'get req is {data}')
@@ -748,12 +792,30 @@ async def button_callback(update: Update, context) -> None:
         user_info.file_name=filename
         user_states_control(user_info)
         await query.edit_message_text(text="请输入情景：")
+    elif query.data.startswith("tt_t_i__"):
+        dataArray = query.data.replace("tt_t_i__", "").split("t_i_")
+        inde_c = int(dataArray[0])
+        data = get_prompt_map()
+        temp_localQing = list(data.keys())
+        logger.info(f'chose index {inde_c} {temp_localQing}')
+        genText = temp_localQing[inde_c]
+        logger.info(f'chose index {inde_c} {genText}')
+        filename = dataArray[1]
+        # 处理用户输入的文本
+        await query.message.reply_text(f"你选择的场景是: {genText} 开始生成 {filename}")
+        handler_gen_text(genText, filename, room_id, user_info)
     elif query.data.startswith("o_f_i_"):
         filename = query.data.replace("o_f_i_", "")
-        user_info.status = 'only_face_awaiting_input'
         user_info.file_name = filename
         user_states_control(user_info)
-        await query.edit_message_caption(caption="请输入情景：")
+        keyboard = qingjinKey(filename)
+        inp_key = []
+        inp_key.append(InlineKeyboardButton("点我后自行输入描述情景(越详细越好)", callback_data=f"t_i_{filename}"))
+        keyboard.append(inp_key)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        logger.info(f'{filename}要如何处理该图片')
+        # 通知用户图片已经保存，并提供选择框
+        await query.edit_message_caption(f'{filename} 要如何处理该图片', reply_markup=reply_markup)
     elif query.data.startswith("f_i_"):
         filename = query.data.replace("f_i_", "")
         data = {'def_skin': 'face'}

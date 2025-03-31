@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # 获取进程ID
-pid1=$(ps -ef | grep '/usr/local/bin/python3.10 SingletonOpenposeDetector.py' | grep -v grep | awk '{print $2}')
-pid2=$(ps -ef | grep 'python3.10 -u SingletonOpenposeDetector.py' | grep -v grep | awk '{print $2}')
+pid1=$(ps -ef | grep 'python SingletonOpenposeDetector.py' | grep -v grep | awk '{print $2}')
+pid2=$(ps -ef | grep 'python -u SingletonOpenposeDetector.py' | grep -v grep | awk '{print $2}')
 
 # 检查进程ID是否存在并杀掉进程
 if [ -n "$pid1" ]; then
@@ -21,5 +21,5 @@ fi
 
 
 # 重启 webap
-nohup python3.10 -u SingletonOpenposeDetector.py > /nvme0n1-disk/book_yes/logs/open_pose.log 2>&1 &
+nohup python -u SingletonOpenposeDetector.py > /nvme0n1-disk/book_yes/logs/open_pose.log 2>&1 &
 echo "Webapp started."

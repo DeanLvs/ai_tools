@@ -8,7 +8,7 @@ import gc
 import zipfile
 from CustCoun import encode_prompt_with_cache
 from CoreService import GenContextParam
-from ip_adapter.custom_pipelines import StableDiffusionXLCustomPipeline
+# from ip_adapter.custom_pipelines import StableDiffusionXLCustomPipeline
 from diffusers import (StableDiffusionXLPipeline,StableDiffusionXLControlNetPipeline, EulerAncestralDiscreteScheduler,
                        DEISMultistepScheduler, LMSDiscreteScheduler, HeunDiscreteScheduler, RePaintScheduler,
                        ControlNetModel, UNet2DConditionModel, AutoencoderKL,
@@ -482,6 +482,9 @@ import torch
 from diffusers import StableDiffusionXLPipeline, DDIMScheduler
 from PIL import Image
 from insightface.utils import face_align
+import sys
+sys.path.append("/nvme0n1-disk/ai_tools/IP-Adapter")
+# git clone https://github.com/tencent-ailab/IP-Adapter.git
 from ip_adapter import IPAdapterPlusXL
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDXL, IPAdapterFaceIDPlusXL, IPAdapterFaceID
 

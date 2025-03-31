@@ -67,6 +67,7 @@ async def process_pics(data: RequestDataMul):
             faces=swap_map,
             enhance_face_model='gfpgan_1.4'
         )
+        cv2.imwrite('/nvme0n1-disk/book_yes/temps.png', final_img)
         # 创建一个 BytesIO 对象，作为 ZIP 文件的内存存储
         zip_io = io.BytesIO()
 
@@ -88,9 +89,6 @@ async def process_pics(data: RequestDataMul):
         # 打印完整的错误堆栈信息
         print("Error occurred:")
         traceback.print_exc()
-    finally:
-        torch.cuda.empty_cache()
-        gc.collect()
 
 @app.post('/process_video_mul')
 async def process_video(data: RequestDataMul):

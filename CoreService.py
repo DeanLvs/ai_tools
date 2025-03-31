@@ -1,7 +1,7 @@
 import os, gc, uuid
 from telegram import InputMediaPhoto
 from ImageProcessorSDXCN import CustomInpaintPipeline as sdxlInpainting
-from BookYesCommon import GenContextParam, GenSavePathParam, process_req_data, get_rest_key, translate_baidu
+from BookYesCommon import GenContextParam, GenSavePathParam, process_req_data, get_rest_key, translate_baidu, read_json_file
 import numpy as np
 import hashlib
 import traceback
@@ -201,7 +201,11 @@ def remove_exclude_mask(mask_clear_ndarray, exclude_mask):
 
 def free_dense_req():
     url = "http://localhost:9080/"
-    requests.get(url + 're')
+    try:
+        requests.get(url + 're')
+    except Exception as e:
+        # 忽略所有请求错误（连接失败、404、断开、超时等）
+        print(f"[警告] /re 请求失败（已忽略）：{e}")
 def dense_req(file_path, free_fast):
     url = "http://localhost:9080/"
     data = {'file_path': file_path}
@@ -229,10 +233,18 @@ def dense_req(file_path, free_fast):
         return None, None, None
 def free_detect_control_image():
     url = 'http://localhost:5060/'
-    requests.get(url + 're')
+    try:
+        requests.get(url + 're')
+    except Exception as e:
+        # 忽略所有请求错误（连接失败、404、断开、超时等）
+        print(f"[警告] /re 请求失败（已忽略）：{e}")
 def free_generate_normal_map():
     url = 'http://localhost:5070/'
-    requests.get(url + 're')
+    try:
+        requests.get(url + 're')
+    except Exception as e:
+        # 忽略所有请求错误（连接失败、404、断开、超时等）
+        print(f"[警告] /re 请求失败（已忽略）：{e}")
 
 def gen_mask_f(file_path_e, file_i_e, free_fast_e=True):
 
@@ -434,7 +446,11 @@ def apply_skin_color(image_pil, mask):
 
 def free_flux_text_gen():
     url = "http://localhost:1006/"
-    requests.get(url + 're')
+    try:
+        requests.get(url + 're')
+    except Exception as e:
+        # 忽略所有请求错误（连接失败、404、断开、超时等）
+        print(f"[警告] /re 请求失败（已忽略）：{e}")
 
 def req_flux_get_face(file_path, prompt, free_fast=True, only_face_path='',seed=2023, gen_type=''):
     # 发起 HTTP POST 请求
@@ -479,7 +495,11 @@ def req_flux_get_face(file_path, prompt, free_fast=True, only_face_path='',seed=
 
 def free_text_gen(port):
     url = f"http://localhost:{port}/"
-    requests.get(url + 're')
+    try:
+        requests.get(url + 're')
+    except Exception as e:
+        # 忽略所有请求错误（连接失败、404、断开、超时等）
+        print(f"[警告] /re 请求失败（已忽略）：{e}")
 
 def req_get_face(file_path):
     # 发起 HTTP POST 请求
@@ -517,7 +537,11 @@ def req_get_face(file_path):
 
 def free_req_replace_face(port):
     url = f"http://localhost:{port}/"
-    requests.get(url + 're')
+    try:
+        requests.get(url + 're')
+    except Exception as e:
+        # 忽略所有请求错误（连接失败、404、断开、超时等）
+        print(f"[警告] /re 请求失败（已忽略）：{e}")
 # 5000 1005
 def req_process_video(pic_b='', pic_save=None, source_path_list=None, target_path_list=None, fast_free=True, port=0):
     # 定义请求的 URL
@@ -633,7 +657,11 @@ def req_text_gen(file_path, prompt, free_fast=True, only_face_path='',seed=2023,
 
 def free_req_lama():
     url = "http://localhost:9090/"
-    requests.get(url + 're')
+    try:
+        requests.get(url + 're')
+    except Exception as e:
+        # 忽略所有请求错误（连接失败、404、断开、超时等）
+        print(f"[警告] /re 请求失败（已忽略）：{e}")
 def req_lama(file_path, mask_clear, free_fast):
     # 将 PIL.Image 对象转换为字节流
     img_io = io.BytesIO()
@@ -738,7 +766,11 @@ def convert_to_ndarray(image):
         raise ValueError("Unsupported image type")
 def free_re_auto_mask():
     url = "http://localhost:3060/"
-    requests.get(url + 're')
+    try:
+        requests.get(url + 're')
+    except Exception as e:
+        # 忽略所有请求错误（连接失败、404、断开、超时等）
+        print(f"[警告] /re 请求失败（已忽略）：{e}")
 
 def re_auto_mask(file_path, free_fast):
     url = "http://localhost:3060/"
@@ -1102,7 +1134,8 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
         torch.cuda.empty_cache()
         gc.collect()
 
-
+def get_prompt_map():
+    return read_json_file()
 def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, create_callback):
     # 处理并提取图片数据
     notify_type = data['notify_type']
@@ -1119,6 +1152,11 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
     # 情景
     if def_skin == '909':
         prompt = data['prompt']
+        qingjing_map = read_json_file()
+        if prompt in qingjing_map:
+            en_prompt = qingjing_map.get(prompt)
+        else:
+            en_prompt = translate_baidu(prompt)
         filename = data['filename']
         face_filename = data['face_filename']
         gen_type = data['gen_type']
@@ -1128,7 +1166,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
         if face_filename is not None and face_filename != '':
             face_filename = get_hold_path(room_id, face_filename, app_path)
         logger.info(f'chose face_filename is {face_filename}')
-        en_prompt= translate_baidu(prompt)
+
 
         text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, room_id=room_id)
         for idx, text_gen_img in enumerate(text_gen_img_s):
@@ -1188,11 +1226,11 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
 
         filename_replace_p = get_fin_hold_path(room_id, filename)
         replace_result_img_s = []
-        replace_result_img_5000 = req_replace_face(pic_b=filename_replace_p, source_path_list=org_faces_f, target_path_list=to_faces_f, port=5000)
-        replace_result_img_s.append(replace_result_img_5000)
-        replace_result_img_1005 = req_replace_face(pic_b=filename_replace_p, source_path_list=org_faces_f,
-                                                   target_path_list=to_faces_f, port=1005)
-        replace_result_img_s.append(replace_result_img_1005)
+        # replace_result_img_5000 = req_replace_face(pic_b=filename_replace_p, source_path_list=org_faces_f, target_path_list=to_faces_f, port=5000)
+        # replace_result_img_s.append(replace_result_img_5000)
+        # replace_result_img_1005 = req_replace_face(pic_b=filename_replace_p, source_path_list=org_faces_f,
+        #                                            target_path_list=to_faces_f, port=1005)
+        # replace_result_img_s.append(replace_result_img_1005)
         replace_result_img_5007 = req_replace_face(pic_b=filename_replace_p, source_path_list=org_faces_f,
                                                    target_path_list=to_faces_f, port=5007)
         replace_result_img_s.append(replace_result_img_5007)
@@ -1201,6 +1239,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
             if replace_result_img is not None:
                 file_face_name = f'p_ref{i}_{filename}'
                 file_face_name_path = os.path.join(app_path, room_id, file_face_name)
+                logger.info(f'start save replace face {file_face_name_path}')
                 room_image_manager.insert_imgStr(room_id, f'{file_face_name}', 'done', '换脸结果图', file_i=replace_result_img,
                                                  file_p=file_face_name_path, ext_info='huanlian', notify_fuc=notify_fuc,
                                                  notify_type=notify_type)
@@ -1226,8 +1265,8 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
         to_faces_f = []
         for s in to_faces:
             to_faces_f.append(get_fin_hold_path(room_id, s))
-        video_by_name(room_id, filename, 1005, org_faces_f, to_faces_f, notify_fuc, notify_type)
-        video_by_name(room_id, filename, 5000, org_faces_f, to_faces_f, notify_fuc, notify_type)
+        # video_by_name(room_id, filename, 1005, org_faces_f, to_faces_f, notify_fuc, notify_type)
+        # video_by_name(room_id, filename, 5000, org_faces_f, to_faces_f, notify_fuc, notify_type)
         video_by_name(room_id, filename, 5007, org_faces_f, to_faces_f, notify_fuc, notify_type)
         return
     # pre_face_pic_list

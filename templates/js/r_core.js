@@ -110,13 +110,15 @@ function setupSocketListeners(socket, room_id) {
         console.log('Connected with session ID:', session_id);
         socket.emit('join_room', { roomId: room_id });
     });
+
+
     socket.on('disconnect', () => {
         room_id = checkUUID();
         console.log('Socket disconnected. Attempting to reconnect...');
         reconnectSocket(room_id);
     });
+
     socket.on('processing_step_progress', (data) => {
-        //提示
         document.getElementById('overlay').innerText = data.text + '-点三次蒙层关闭';
     });
 

@@ -54,18 +54,34 @@ def upload_file():
         return 'No selected file'
     if file:
         filename = file.filename
+        ext = os.path.splitext(filename)[1].lower()
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], room_id)
         # 创建房间
         os.makedirs(file_path, exist_ok=True)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], room_id, filename)
 
         file.save(file_path)
-        # 备份原始图像
-        backup_path = os.path.join(app.config['UPLOAD_FOLDER'], room_id, f"backup_{filename}")
-        shutil.copy(file_path, backup_path)
-        # 调整图像大小
-        filename = resize_image(file_path)
-        room_image_manager.insert_imgStr(room_id, f'{filename}', 'done',
+
+        # 判断类型并处理
+        image_exts = ['.jpg', '.jpeg', '.png', '.bmp', '.webp']
+        video_exts = ['.mp4', '.mov', '.avi', '.mkv']
+        audio_exts = ['.wav', '.mp3', '.m4a', '.flac', '.aac']
+
+        if ext in image_exts:
+            # 备份原始图像
+            backup_path = os.path.join(app.config['UPLOAD_FOLDER'], room_id, f"backup_{filename}")
+            shutil.copy(file_path, backup_path)
+            # 调整图像大小
+            filename = resize_image(file_path)
+            file_type = 'done'
+        elif ext in video_exts:
+            file_type = 'video'
+        elif ext in audio_exts:
+            file_type = 'audio'
+        else:
+            return jsonify({'error': 'Unsupported file type'}), 400
+
+        room_image_manager.insert_imgStr(room_id, f'{filename}', file_type,
                                          '原图', ext_info='', notify_fuc=notify_it,
                                          notify_type='ws')
         return jsonify({'filename': filename, 'file_url': f'{filename}'})
@@ -327,7 +343,25 @@ def rep_upload_face():
         # 调整图像大小
         file_face_img_filename = resize_image(file_face_img_file_path)
         return jsonify({'filename_face': file_face_img_filename, 'file_face_url': f'{file_face_img_filename}'})
+@app.route('/api/upload_audio', methods=['POST'])
+def upload_audio():
+    if 'audio' not in request.files:
+        return 'No audio file part', 400
 
+    audio_file = request.files['audio']
+    room_id = request.form.get('room_id')
+
+    if audio_file.filename == '':
+        return 'No selected audio file', 400
+
+    if audio_file:
+        audio_filename = 'rec_' + audio_file.filename  # 例如：rec_recording.wav
+        save_dir = os.path.join(app.config['UPLOAD_FOLDER'], room_id)
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, audio_filename)
+        audio_file.save(save_path)
+
+        return send_from_directory(save_dir, audio_filename)
 
 @app.route('/uploads/<room_id>/<filename>')
 def uploaded_file(room_id, filename):

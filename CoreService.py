@@ -909,7 +909,7 @@ def get_from_local(pil_img, save_img_path, conver = None):
             return Image.open(save_img_path)
     return None
 
-def video_by_name(room_id, filename, port, org_faces_f, to_faces_f, notify_fuc, notify_type):
+def video_by_name(room_id, filename, port, org_faces_f, to_faces_f, notify_fuc, notify_type, room_image_manager):
     file_face_name_video = f'p_vid{port}_{filename}'
 
     save_video_path = get_fin_hold_path(room_id, file_face_name_video)
@@ -918,12 +918,15 @@ def video_by_name(room_id, filename, port, org_faces_f, to_faces_f, notify_fuc, 
     replace_result_img = req_process_video(pic_b=filename_replace_p, pic_save=save_video_path,
                                            source_path_list=org_faces_f, target_path_list=to_faces_f, port=port)
     if replace_result_img is not None:
-
+        video_filename = os.path.basename(replace_result_img)
         # todo 增加发送视频
-        notify_fuc(notify_type, 'processing_done',
-                   {'img_type': 'done', 'video_url': save_video_path, 'filename': filename, 'text': '已完成'},
-                   to=room_id,
-                   keyList=get_rest_key())
+        # notify_fuc(notify_type, 'processing_done',
+        #            {'img_type': 'video', 'video_url': save_video_path, 'filename': filename, 'text': '已完成'},
+        #            to=room_id,
+        #            keyList=get_rest_key())
+        room_image_manager.insert_imgStr(room_id, f'{video_filename}', 'video',
+                                         '原图', ext_info='', notify_fuc=notify_fuc,
+                                         notify_type='ws')
     else:
         notify_fuc(notify_type, 'processing_step_progress',
                    {'text': '视频处理失败'}, to=room_id)
@@ -1267,7 +1270,7 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
             to_faces_f.append(get_fin_hold_path(room_id, s))
         # video_by_name(room_id, filename, 1005, org_faces_f, to_faces_f, notify_fuc, notify_type)
         # video_by_name(room_id, filename, 5000, org_faces_f, to_faces_f, notify_fuc, notify_type)
-        video_by_name(room_id, filename, 5007, org_faces_f, to_faces_f, notify_fuc, notify_type)
+        video_by_name(room_id, filename, 5007, org_faces_f, to_faces_f, notify_fuc, notify_type, room_image_manager)
         return
     # pre_face_pic_list
     if def_skin == 'swap_face':

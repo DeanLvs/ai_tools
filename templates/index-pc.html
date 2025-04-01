@@ -513,62 +513,99 @@
             document.getElementById('filename').value = fileName;
         }
         function add_img_to_list(url_path, specialImageListDiv, p_name, in_img_type) {
-            console.log(url_path)
-            const imgContainer = document.createElement('div');
-            imgContainer.classList.add('image-container');
+            console.log(url_path);
+            const container = document.createElement('div');
+            container.classList.add('image-container');
 
-            // 使用 <a> 标签包裹图片，以启用 Fancybox
-            const link = document.createElement('a');
-            link.href = url_path;
-            link.setAttribute('data-fancybox', 'gallery'); // 添加 Fancybox 画廊属性
-            link.setAttribute('data-caption', p_name || "处理结果"); // 设置图片标题
+            const ext = url_path.split('.').pop().toLowerCase();
+            const captionText = p_name || "处理结果";
 
-            if (url_path.endsWith('.mp4')) {
+            // 判断是否是音频
+            if (['mp3', 'wav', 'm4a', 'flac', 'aac'].includes(ext)) {
+                const audio = document.createElement('audio');
+                audio.src = url_path;
+                audio.controls = true;
+                audio.style.width = '100%';
+                container.appendChild(audio);
+
+                const caption = document.createElement('div');
+                caption.style.textAlign = 'center';
+                caption.style.fontSize = '14px';
+                caption.style.marginTop = '5px';
+                caption.innerText = captionText;
+                container.appendChild(caption);
+
+                specialImageListDiv.appendChild(container);
+                return;
+            }
+
+            // 判断是否是视频
+            if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) {
+                const link = document.createElement('a');
+                link.href = url_path;
+                link.setAttribute('data-fancybox', 'gallery');
+                link.setAttribute('data-caption', captionText);
+
                 const video = document.createElement('video');
                 video.src = url_path;
                 video.controls = true;
+                video.style.width = '100%';
                 video.alt = '处理后的视频';
                 link.appendChild(video);
-            } else {
-                const img = document.createElement('img');
-                img.src = url_path;
-                img.alt = '处理后的图片';
-                link.appendChild(img);
-            }
+                container.appendChild(link);
 
-            imgContainer.appendChild(link);
+                const overlay = document.createElement('div');
+                overlay.classList.add('image-overlay');
+                const caption = document.createElement('span');
+                caption.innerText = captionText;
+                overlay.appendChild(caption);
 
-            // 创建浮动层
-            const overlay = document.createElement('div');
-            overlay.classList.add('image-overlay');
-
-            // 标题
-            const caption = document.createElement('span');
-            caption.innerText = p_name || "处理结果";
-            overlay.appendChild(caption);
-
-            // 选择按钮
-            const selectButton = document.createElement('button');
-
-            if(in_img_type == 'face_pre'){
-
+                const selectButton = document.createElement('button');
                 selectButton.innerText = '选择';
                 selectButton.classList.add('select-button');
                 selectButton.onclick = () => handleSelectClick(link.href, selectButton);
+                overlay.appendChild(selectButton);
+
+                container.appendChild(overlay);
+                specialImageListDiv.appendChild(container);
+                return;
+            }
+
+            // 默认当作图片处理
+            const link = document.createElement('a');
+            link.href = url_path;
+            link.setAttribute('data-fancybox', 'gallery');
+            link.setAttribute('data-caption', captionText);
+
+            const img = document.createElement('img');
+            img.src = url_path;
+            img.alt = '处理后的图片';
+            link.appendChild(img);
+            container.appendChild(link);
+
+            const overlay = document.createElement('div');
+            overlay.classList.add('image-overlay');
+
+            const caption = document.createElement('span');
+            caption.innerText = captionText;
+            overlay.appendChild(caption);
+
+            const selectButton = document.createElement('button');
+            selectButton.innerText = '选择';
+            selectButton.classList.add('select-button');
+            selectButton.onclick = () => handleSelectClick(link.href, selectButton);
+
+            if (in_img_type === 'face_pre') {
                 const selectFaceButton = document.createElement('button');
                 selectFaceButton.innerText = '源脸';
                 selectFaceButton.classList.add('source-button');
                 selectFaceButton.onclick = () => handleSourceTargetSelection(link.href, selectFaceButton);
                 overlay.appendChild(selectFaceButton);
-            } else {
-                selectButton.innerText = '选择';
-                selectButton.classList.add('select-button');
-                selectButton.onclick = () => handleSelectClick(link.href, selectButton);
             }
 
             overlay.appendChild(selectButton);
-            imgContainer.appendChild(overlay);
-            specialImageListDiv.appendChild(imgContainer);
+            container.appendChild(overlay);
+            specialImageListDiv.appendChild(container);
         }
         function uuidv4() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -630,28 +667,29 @@
                 }
                 // 添加文件名到集合，标记为已处理
                 processedFiles.add(newFileName);
-                // 删除已有相同文件名的图片
-                const existingImages = imageListDiv.querySelectorAll('img');
-                existingImages.forEach(img => {
-                    const imgSrcPath = new URL(img.src).pathname;
-                    const existingFileName = imgSrcPath.split('/').pop();
-                    if (existingFileName === newFileName) {
-                        img.parentElement.remove(); // 移除匹配的图片容器
-                    }
-                });
 
-                // 删除已有相同文件名的视频
-                const existingVideos = imageListDiv.querySelectorAll('video');
-                existingVideos.forEach(video => {
-                    const videoSrcPath = new URL(video.src).pathname;
-                    const existingFileName = videoSrcPath.split('/').pop();
+                // 删除已有相同文件名的图片 / 视频 / 音频元素
+                const existingMedia = imageListDiv.querySelectorAll('img, video, audio');
+                existingMedia.forEach(media => {
+                    const srcPath = new URL(media.src).pathname;
+                    const existingFileName = srcPath.split('/').pop();
                     if (existingFileName === newFileName) {
-                        video.parentElement.remove(); // 移除匹配的视频容器
+                        media.parentElement.remove();
                     }
                 });
-                if(data.img_type == 'done' || data.img_type == 'face_pre'){
+                lowerUrl = 'xxx';
+                if (data.processed_image_url) {
+                   lowerUrl = data.processed_image_url.toLowerCase();
+                }
+                if (lowerUrl.endsWith('.mp4')) {
+                    // 如果是 mp4 结尾的视频，强制作为 video 类型处理
+                    add_img_to_list(data.processed_image_url, imageListDiv, data.name, 'video');
+                } else if(data.img_type == 'done' || data.img_type == 'face_pre'){
                     add_img_to_list(data.processed_image_url, imageListDiv, data.name, data.img_type);
-                }else if(rev_pre){
+                } else if (data.img_type === 'video' || data.img_type === 'audio') {
+                    // 统一处理：全部交给 add_img_to_list 渲染
+                    add_img_to_list(data.processed_image_url, imageListDiv, data.name, data.img_type);
+                }  else if(rev_pre){
                     add_img_to_list(data.processed_image_url, imageListDiv, data.name, data.img_type);
                 }
                 const progressBar = document.querySelector('.progress-bar');
@@ -939,15 +977,16 @@
             <h4>[仅供学术研究使用]</h4>
             <div class="upload-section">
                 <label class="file-upload-button">
-                    上传图片或视频
-                    <input type="file" id="fileInput" accept="image/*,video/*" onchange="uploadImage()" />
+                    上传图片\视频\音频
+                    <input type="file" id="fileInput" accept="image/*,video/*,audio/*" onchange="uploadImage()" />
                 </label>
                 <button class="small-button" onclick="processImage_inpaint_b()">换装</button>
-                <button class="small-button" onclick="showModal()">换场景</button>
+                <button class="small-button" onclick="showModal()">换场景(资源不足、暂不支持)</button>
                 <button class="small-button" onclick="check_face_b()">面部特征提取→</button>
                 <button class="small-button" onclick="swap_face_b()">→换脸</button>
                 <button class="small-button" onclick="viewImage()">查看历史</button>
                 <button class="small-button" onclick="showComOverlay()">积分兑换</button>
+                <button class="small-button" onclick="toggleRecording(this)">🎙️ 录音</button>
 
             </div>
             <input type="hidden" id="filename">
@@ -1010,6 +1049,119 @@
                 console.error('Error:', error);
             });
         }
+    </script>
+
+    <script>
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+
+    function toggleRecording(button) {
+        if (!isRecording) {
+            // 开始录音
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    const mimeType = 'audio/webm';
+                    mediaRecorder = new MediaRecorder(stream, { mimeType });
+                    recordedChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        if (event.data.size > 0) {
+                            recordedChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: mimeType });
+                        convertToWavAndUpload(blob);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    button.innerText = '⏹️ 停止录音';
+                })
+                .catch(err => {
+                    console.error('获取麦克风失败:', err);
+                    alert('无法访问麦克风，请检查权限');
+                });
+        } else {
+            // 停止录音
+            mediaRecorder.stop();
+            isRecording = false;
+            button.innerText = '🎙️ 录音';
+        }
+    }
+
+    function convertToWavAndUpload(webmBlob) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const audioContext = new AudioContext({ sampleRate: 16000 });
+            audioContext.decodeAudioData(reader.result)
+                .then(buffer => {
+                    const wavBlob = encodeWAV(buffer.getChannelData(0), 16000);
+                    uploadWavBlob(wavBlob);
+                });
+        };
+        reader.readAsArrayBuffer(webmBlob);
+    }
+
+    function encodeWAV(samples, sampleRate) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+
+        const writeString = (view, offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        const floatTo16BitPCM = (output, offset, input) => {
+            for (let i = 0; i < input.length; i++, offset += 2) {
+                let s = Math.max(-1, Math.min(1, input[i]));
+                s = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                output.setInt16(offset, s, true);
+            }
+        };
+
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true); // fmt chunk size
+        view.setUint16(20, 1, true); // Audio format (1 = PCM)
+        view.setUint16(22, 1, true); // Channels
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true); // Byte rate
+        view.setUint16(32, 2, true); // Block align
+        view.setUint16(34, 16, true); // Bits per sample
+        writeString(view, 36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+
+        floatTo16BitPCM(view, 44, samples);
+        return new Blob([view], { type: 'audio/wav' });
+    }
+
+    function uploadWavBlob(wavBlob) {
+        const formData = new FormData();
+        const room_id = checkUUID();
+        const file = new File([wavBlob], "recording.wav", { type: "audio/wav" });
+        formData.append('audio', file);
+        formData.append('room_id', room_id);
+
+        fetch('/api/upload_audio', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log('音频上传成功:', data);
+            addChatMessage('上传', '录音音频上传成功: ' + data.filename, 'server');
+        })
+        .catch(err => {
+            console.error('上传失败:', err);
+            alert('上传失败');
+        });
+    }
     </script>
 </body>
 </html>

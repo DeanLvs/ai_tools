@@ -28,6 +28,7 @@ body {
     position: fixed;  /* 固定定位 */
     bottom: 10px;     /* 距离页面底部10px */
     right: 10px;      /* 距离页面右侧10px */
+<!--            background-color: #444; /* 添加背景颜色以便更明显 */-->
 }
 header {
     width: 100%;

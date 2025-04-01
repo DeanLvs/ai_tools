@@ -345,6 +345,29 @@ label {
     border: 1px solid #444;
 }
 
+/* 新增样式：选择按钮 */
+.image-container button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #444;
+    color: #f1f1f1;
+    border: none;
+    padding: 10px 0; /* 适当增加按钮的填充 */
+    cursor: pointer;
+    text-align: center;
+    font-size: 16px; /* 设置按钮文字大小 */
+    opacity: 0.8; /* 设置初始透明度 */
+    transition: opacity 0.2s ease, background-color 0.2s ease; /* 添加过渡效果 */
+}
+
+.image-container button:hover {
+    opacity: 1;
+    background-color: #666;
+}
+
+
 .image-container p {
     position: absolute;
     bottom: 0;

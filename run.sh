@@ -60,3 +60,5 @@ nohup python -u webapp9.0.py &
 echo "Webapp started."
 cd /nvme0n1-disk/ai_tools/SocAIty/face2face
 sh start.sh
+cd /nvme0n1-disk/voice/Spark-TTS
+sh start_tts_api.sh

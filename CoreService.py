@@ -1256,13 +1256,14 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                    {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id, keyList=get_rest_key())
         return
     if def_skin == 'voice_gen':
-        prompt = data['prompt']
+        texts = data['text']
         filename = data['filename']
         file_path = os.path.join(app_path, room_id, filename)
-        unique_key = generate_unique_key(room_id, filename, prompt)
+        unique_key = generate_unique_key(room_id, filename, texts)
         logger.info(f"unique_key: {unique_key}")
         logger.info(f'chose voice is {filename} file_path {file_path}')
-        voice_file = request_tts_wav(port = 5018, text= prompt, prompt_speech_path=file_path
+        defp = "吃燕窝就选燕之屋，本节目由26年专注高品质燕窝的燕之屋冠名播出。豆奶牛奶换着喝，营养更均衡，本节目由豆本豆豆奶特约播出。"
+        voice_file = request_tts_wav(port = 5018, text=texts, prompt_text= defp, prompt_speech_path=file_path
                                                     , free_fast=True)
         file_txt_name = f'p_voi_{unique_key}.wav'
         file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)

@@ -2,6 +2,7 @@ import torch, cv2, requests
 import matplotlib.pyplot as plt
 from diffusers.utils import load_image
 from diffusers import FluxControlNetModel
+from transformers import CLIPTextModel, T5EncoderModel
 from safetensors.torch import load_file
 from diffusers.pipelines import StableDiffusionXLPipeline, AutoPipelineForText2Image, FluxControlNetPipeline, FluxPipeline, FluxControlNetInpaintPipeline, FluxInpaintPipeline, FluxControlNetImg2ImgPipeline
 from PIL import Image
@@ -124,11 +125,15 @@ def gen_img_canny_control(control_image, prompt):
         width=1024
     )[0]
     return image
-
+import os
 def text_get_img(prompt, room_id=None):
+    os.environ["HF_TOKEN"] = "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"
     # pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16)
     safetensors_file = '/nvme0n1-disk/civitai-downloader/STOIQOA/STOIQOAfroditeFLUXXL_F1DAlpha.safetensors'
-    pipe = FluxPipeline.from_single_file(safetensors_file, torch_dtype=torch.bfloat16)
+    # 加载 FLUX 专用的 CLIP L 文本编码器
+    text_encoder = CLIPTextModel.from_pretrained("openai/clip-vit-large-patch14")
+    text_encoder_2 = T5EncoderModel.from_pretrained('google/t5-v1_1-xxl', from_tf=True)
+    pipe = FluxPipeline.from_single_file(safetensors_file, torch_dtype=torch.bfloat16, text_encoder=text_encoder, text_encoder_2=text_encoder_2)
 
     # state_dict = load_file(safetensors_file)
 

@@ -601,6 +601,14 @@
                 selectFaceButton.classList.add('source-button');
                 selectFaceButton.onclick = () => handleSourceTargetSelection(link.href, selectFaceButton);
                 overlay.appendChild(selectFaceButton);
+
+                // 新增的复选框
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.classList.add('face-pre-checkbox');
+                // 这里直接存完整路径，后面会用到它的文件名部分
+                checkbox.value = url_path;
+                overlay.appendChild(checkbox);
             }
 
             overlay.appendChild(selectButton);
@@ -898,6 +906,40 @@
             closeModal();
         }
 
+        function confirmInputMul() {
+            const userInput = document.getElementById('modalTextarea').value;
+            if (userInput === "") {
+                alert("请输入内容！");
+                return;
+            }
+
+            // 1. 获取所有被勾选的复选框
+            const facePreCheckboxes = document.querySelectorAll('.face-pre-checkbox:checked');
+            if (facePreCheckboxes.length === 0) {
+                alert("请至少勾选一个 face_pre 图片！");
+                return;
+            }
+
+            // 2. 收集选中的文件名，拼成逗号分隔
+            const selectedFilenames = [];
+            facePreCheckboxes.forEach(cb => {
+                // 只取文件名部分
+                selectedFilenames.push(cb.value.split('/').pop());
+            });
+            const filename = selectedFilenames.join('||');
+
+            showOverlay();
+            const room_id = checkUUID();
+            const prompt = userInput;
+            const reverse_prompt = '';
+            const gen_type = 'muls';
+            const face_filename = '';
+
+            checkSocket();
+            socket.emit('process_text_gen_pic', { filename, face_filename, prompt, reverse_prompt, gen_type, roomId: room_id });
+            closeModal();
+        }
+
         function confirmInputFlux() {
             const userInput = document.getElementById('modalTextarea').value;
             console.log("User input:", userInput);
@@ -981,7 +1023,7 @@
                     <input type="file" id="fileInput" accept="image/*,video/*,audio/*" onchange="uploadImage()" />
                 </label>
                 <button class="small-button" onclick="processImage_inpaint_b()">换装</button>
-                <button class="small-button" onclick="showModal()">换场景(资源不足、暂不支持)</button>
+                <button class="small-button" onclick="showModal()">换场景</button>
                 <button class="small-button" onclick="check_face_b()">面部特征提取→</button>
                 <button class="small-button" onclick="swap_face_b()">→换脸</button>
                 <button class="small-button" onclick="viewImage()">查看历史</button>
@@ -1013,6 +1055,7 @@
         </div>
         <textarea id="modalTextarea" placeholder="选择的图片有多个人时，会随机选择生成，可以先点击[面部特征提取]后选择生成的脸部图片，再[换场景], 你可以在这里输入想要的场景内容..."></textarea>
         <button onclick="confirmInput()">使用1.0版本(生成6张图)</button>
+        <button onclick="confirmInputMul()">使用2.0版本(资源不足暂不可用)</button>
         <button onclick="confirmInputFlux()">使用1.2版本(生成1图)</button>
         <button onclick="closeModal()">取消</button>
     </div>

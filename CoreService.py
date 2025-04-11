@@ -692,6 +692,53 @@ def req_lama(file_path, mask_clear, free_fast):
     logger.info(f'-----error return lam---------')
     return None, False
 
+def request_tts_wav(
+    port: int,
+    text: str,
+    prompt_text: str,
+    prompt_speech_path: str,
+    free_fast: bool
+) -> bytes:
+    """
+    1) 向 TTS 服务 (http://localhost:{port}/process_tts) 发送请求，传入 text/prompt_text/prompt_speech_path。
+    2) 解压缩返回的 .zip，提取其中的 .wav 文件二进制数据并返回。
+    3) 如果 free_fast=True，则在 finally 里调用 /re 路由。
+    """
+    # 在此构造要发给后端的 payload。若后端还需要 gender, pitch, speed 等，可按需加上。
+    payload = {
+        "text": text,
+        "prompt_text": prompt_text,
+        "prompt_speech_path": prompt_speech_path
+    }
+
+    try:
+        # 1) 发请求到 /process_tts (注意带上路径 /process_tts，否则默认访问根路由)
+        url = f"http://localhost:{port}/process_tts"
+        response = requests.post(url, json=payload, timeout=300)
+        if response.status_code != 200:
+            raise ValueError(f"Request failed, status code: {response.status_code}, detail: {response.text}")
+        # 2) 解压缩返回的 ZIP，提取 .wav
+        zip_bytes = io.BytesIO(response.content)
+        with zipfile.ZipFile(zip_bytes, "r") as zf:
+            wav_name = None
+            for name in zf.namelist():
+                if name.endswith(".wav"):
+                    wav_name = name
+                    break
+            if not wav_name:
+                raise ValueError("No .wav file found in the returned zip")
+
+            wav_data = zf.read(wav_name)  # 读取此 .wav 的二进制数据
+        return wav_data
+
+    except Exception as e:
+        print(f"请求 TTS 或解压 .wav 时出错: {e}")
+        raise
+    finally:
+        # 如果想在成功或异常后都尝试重启，就写在 finally
+        if free_fast:
+            free_text_gen(port)
+
 def gen_fix_pic(file_path, mask_future, free_fast=True):
     try:
         logger.info(f'start remove and set skin mask....')
@@ -1162,26 +1209,30 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
             en_prompt = translate_baidu(prompt)
         filename = data['filename']
         face_filename = data['face_filename']
+        if '||' in filename:
+            filename_temps = filename.split('||')
+            file_path_temps = [os.path.join(app_path, room_id, fn) for fn in filename_temps]
+            file_path = '||'.join(file_path_temps)
+        else:
+            file_path = os.path.join(app_path, room_id, filename)
         gen_type = data['gen_type']
-        file_path = os.path.join(app_path, room_id, filename)
         unique_key = generate_unique_key(room_id, filename, prompt, face_filename, gen_type)
         logger.info(f"unique_key: {unique_key}")
         if face_filename is not None and face_filename != '':
             face_filename = get_hold_path(room_id, face_filename, app_path)
-        logger.info(f'chose face_filename is {face_filename}')
-
-
-        text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, room_id=room_id)
-        for idx, text_gen_img in enumerate(text_gen_img_s):
-            file_txt_name = f'p_txt_{idx}_{unique_key}.png'
-            logger.info(f"Image {idx} saved to {file_txt_name}")
-            file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
-            room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'done', '生成图', file_i=text_gen_img,
-                                             file_p=file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
-                                             notify_type=notify_type)
-
+        logger.info(f'chose face_filename is {face_filename} file_path {file_path}')
+        if gen_type == 'muls':
+            text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type,
+                                          room_id=room_id)
+            for idx, text_gen_img in enumerate(text_gen_img_s):
+                file_txt_name = f'p_txt_{idx}_{unique_key}.png'
+                logger.info(f"Image {idx} saved to {file_txt_name}")
+                file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
+                room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'done', '生成图', file_i=text_gen_img,
+                                                 file_p=file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
+                                                 notify_type=notify_type)
         # 1006 flux ip
-        if gen_type == 'ipFlux':
+        elif gen_type == 'ipFlux':
             text_gen_img_s_t = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type, port=1006, room_id=room_id)
             for idx, text_gen_img in enumerate(text_gen_img_s_t):
                 file_txt_name = f'p_flux_{idx}_{unique_key}.png'
@@ -1190,7 +1241,36 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
                 room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'done','生成图', file_i = text_gen_img,
                                              file_p = file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
                                              notify_type=notify_type)
+        else:
+            text_gen_img_s = req_text_gen(file_path, en_prompt, only_face_path=face_filename, gen_type=gen_type,
+                                          room_id=room_id)
+            for idx, text_gen_img in enumerate(text_gen_img_s):
+                file_txt_name = f'p_txt_{idx}_{unique_key}.png'
+                logger.info(f"Image {idx} saved to {file_txt_name}")
+                file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
+                room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'done', '生成图', file_i=text_gen_img,
+                                                 file_p=file_txt_name_path, ext_info=en_prompt, notify_fuc=notify_fuc,
+                                                 notify_type=notify_type)
 
+        notify_fuc(notify_type, 'processing_step_progress',
+                   {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id, keyList=get_rest_key())
+        return
+    if def_skin == 'voice_gen':
+        prompt = data['prompt']
+        filename = data['filename']
+        file_path = os.path.join(app_path, room_id, filename)
+        unique_key = generate_unique_key(room_id, filename, prompt)
+        logger.info(f"unique_key: {unique_key}")
+        logger.info(f'chose voice is {filename} file_path {file_path}')
+        voice_file = request_tts_wav(port = 5018, text= prompt, prompt_speech_path=file_path
+                                                    , free_fast=True)
+        file_txt_name = f'p_voi_{unique_key}.wav'
+        file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
+        logger.info(f"voice saved to {file_txt_name_path}")
+        with open("file_txt_name_path", "wb") as f:
+            f.write(voice_file)
+        room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'audio', '生成视频', file_p=file_txt_name_path, notify_fuc=notify_fuc,
+                                         notify_type=notify_type)
         notify_fuc(notify_type, 'processing_step_progress',
                    {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id, keyList=get_rest_key())
         return

@@ -99,7 +99,7 @@ async def process_video(data: RequestDataMul):
         final_video = f2f.swap(
             media=data.pic_b,
             faces=swap_map,
-            enhance_face_model='gfpgan_1.4'
+            enhance_face_model='gpen_bfr_512'
         )
         final_video.save(data.pic_save)
         print('成功生成图像 ------')

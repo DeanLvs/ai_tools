@@ -80,7 +80,8 @@ class CustomInpaintPipeline:
             self._print_component_load_info("Text Encoder 1", text_encoder)
             self._print_component_load_info("Text Encoder 2", text_encoder_2)
             self.pipe = self._initialize_pipe()
-            weights_path = "/nvme0n1-disk/civitai-downloader/STOIQOAfroditeFLUXXL_XL31.safetensors"
+            # weights_path = "/nvme0n1-disk/civitai-downloader/STOIQOAfroditeFLUXXL_XL31.safetensors"
+            weights_path = "/nvme0n1-disk/civitai-downloader/pornmaster_proSDXLV3VAE.safetensors"
             self.load_pretrained_weights(weights_path)
             # self.load_lora_weights()
         logger.info('suc lora')
@@ -703,15 +704,15 @@ def ip_sdxl_work_plus(face_pic_path="", prompt="", negative_prompt="monochrome, 
     return images
 
 
-def ip_sdxl_portrait():
+def ip_sdxl_portrait(images, prompt, room_id):
     app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
     app.prepare(ctx_id=0, det_size=(640, 640))
 
-    images = ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg"]
+    # images = ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg"]
 
     faceid_embeds = []
-    for image in images:
-        image = cv2.imread("person.jpg")
+    for image_path in images:
+        image = cv2.imread(image_path)
         faces = app.get(image)
         faceid_embeds.append(torch.from_numpy(faces[0].normed_embedding).unsqueeze(0).unsqueeze(0))
     faceid_embeds = torch.cat(faceid_embeds, dim=1)
@@ -724,16 +725,22 @@ def ip_sdxl_portrait():
     pipe = sdxlPipe.pipe
 
     # load ip-adapter
-    ip_model = IPAdapterFaceIDXL(pipe, ip_ckpt, device, num_tokens=16, n_cond=5)
+    ip_model = IPAdapterFaceIDXL(pipe, ip_ckpt, device)
 
     # generate image
-    prompt = "photo of a woman in red dress in a garden"
+    # prompt = "photo of a woman in red dress in a garden"
     negative_prompt = "monochrome, lowres, bad anatomy, worst quality, low quality, blurry"
 
     images = ip_model.generate(
         prompt=prompt, negative_prompt=negative_prompt, faceid_embeds=faceid_embeds, num_samples=4, width=1024,
+        callback=create_callback('3/7', room_id, 30),callback_steps=1,
         height=1024, num_inference_steps=30, seed=2023
     )
+    del ip_model
+    # 释放 GPU 缓存
+    torch.cuda.empty_cache()
+    # 触发垃圾回收，释放未使用的内存
+    gc.collect()
     return images
 from fastapi import FastAPI, File, UploadFile, Form, BackgroundTasks
 from fastapi.responses import StreamingResponse
@@ -860,7 +867,7 @@ async def inpaint(
             # total_pic.extend(images_v0)
             images_v1 = ip_sdxl_plus_v1(face_pic_path = file_path, prompt=prompt, seed=seed, only_face_pic_path= only_file_path, room_id=room_id)
             total_pic.extend(images_v1)
-        else:
+        elif gen_type == 'flux':
             # flux
             images_flux = gen_img_and_swap_face(prompt, room_id=room_id)
             if only_file_path is not None and only_file_path != '':
@@ -879,9 +886,14 @@ async def inpaint(
                 total_pic.append(replace_result_img_5007)
             else:
                 total_pic.append(images_flux)
+        elif gen_type == 'muls':
+            logger.info(f'chose face_filename is {file_path} ')
+            print(f'chose face_filename is {file_path}')
+            musimages = file_path.split('||')
+            images_v1 = ip_sdxl_portrait(images=musimages, prompt=prompt, room_id=room_id)
+            total_pic.extend(images_v1)
         # 创建一个 BytesIO 对象，作为 ZIP 文件的内存存储
         zip_io = io.BytesIO()
-
         # 创建 ZIP 文件
         with zipfile.ZipFile(zip_io, mode='w') as zip_file:
             for idx, img in enumerate(total_pic):

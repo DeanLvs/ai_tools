@@ -452,6 +452,18 @@ def process_pic_swap_face(data):
     user_info = query_or_def(User(roomId, roomId))
     add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
 
+@socketio.on('process_pic_swap_face')
+def process_pic_swap_face(data):
+    roomId = data['roomId']
+    filename = data['filename']
+    data['notify_type'] = 'ws'
+    data['def_skin'] = 'voice_gen'
+    logger.info(f'get req is {data}')
+    room_image_manager = RoomImageManager()
+    user_info = query_or_def(User(roomId, roomId))
+    add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
+
+
 @socketio.on('process_video_swap_face')
 def process_video_swap_face(data):
     roomId = data['roomId']

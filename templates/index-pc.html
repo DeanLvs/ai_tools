@@ -130,6 +130,16 @@
             cursor: pointer;
         }
 
+        .voice-select-button {
+            font-size: 14px;
+            color: white;
+            background-color: #ccc;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
         .target-button {
             font-size: 14px;
             color: red;
@@ -432,6 +442,16 @@
             document.getElementById('filename').value = '';
         }
 
+        function resetSelVoice(){
+            const allButtons = document.querySelectorAll('.voice-select-button');
+            allButtons.forEach(btn => {
+                btn.style.backgroundColor = '#ccc';
+                btn.innerText = '选择音频';
+            });
+            document.getElementById('filename').value = '';
+        }
+
+
         /**
          * Reset all unpaired buttons to their default "选择" state.
          */
@@ -512,6 +532,23 @@
             button.innerText = '取消';
             document.getElementById('filename').value = fileName;
         }
+
+        function handleVoiceSelectClick(imgSrc, button) {
+            const fileName = imgSrc.split('/').pop();
+            const currentBgColor = button.style.backgroundColor;
+            if (currentBgColor === 'blue') {
+                // 将按钮恢复为未选择状态
+                button.style.backgroundColor = '#ccc';
+                button.innerText = '选择音频';
+                document.getElementById('voice_filename').value = '';
+                return;
+            }
+            resetSelVoice();
+            button.style.backgroundColor = 'blue';
+            button.innerText = '取消音频选择';
+            document.getElementById('voice_filename').value = fileName;
+        }
+
         function add_img_to_list(url_path, specialImageListDiv, p_name, in_img_type) {
             console.log(url_path);
             const container = document.createElement('div');
@@ -533,7 +570,22 @@
                 caption.style.fontSize = '14px';
                 caption.style.marginTop = '5px';
                 caption.innerText = captionText;
+
+
                 container.appendChild(caption);
+
+                const selectButton = document.createElement('button');
+                selectButton.innerText = '选择';
+                selectButton.classList.add('select-button');
+                selectButton.onclick = () => handleSelectClick(url_path, selectButton);
+                container.appendChild(selectButton);
+
+
+                const selectButtonVoice = document.createElement('button');
+                selectButtonVoice.innerText = '选择音频';
+                selectButtonVoice.classList.add('voice-select-button');
+                selectButtonVoice.onclick = () => handleVoiceSelectClick(url_path, selectButtonVoice);
+                container.appendChild(selectButtonVoice);
 
                 specialImageListDiv.appendChild(container);
                 return;
@@ -887,6 +939,43 @@
             closeComOverlay();
         }
 
+        function confirmVoice() {
+            const filename = document.getElementById('filename').value;
+            if (!filename || filename.trim() === '') {
+                if (!['mp3', 'wav', 'm4a', 'flac', 'aac'].includes(filename)) {
+                    alert('先选择一个要处理音频吧');
+                // 这里可以添加其他处理逻辑，比如阻止表单提交等
+                return;
+                }
+            }
+            const room_id = checkUUID();
+            checkSocket();
+            const texts = document.getElementById('voiceInput').value;
+            socket.emit('process_voice_clone', { filename: filename, text: texts, roomId: room_id});
+            closeVoiceOverlay();
+        }
+
+        function confirmVideo() {
+            const voice_filename = document.getElementById('voice_filename').value;
+            const filename = document.getElementById('filename').value;
+            if (!voice_filename || voice_filename.trim() === '') {
+                if (!['mp3', 'wav', 'm4a', 'flac', 'aac'].includes(voice_filename)) {
+                    alert('先选择一个要处理音频吧');
+                // 这里可以添加其他处理逻辑，比如阻止表单提交等
+                return;
+                }
+            }
+            if (!filename || filename.trim() === '') {
+                alert('先选择一个要处理图片吧');
+                // 这里可以添加其他处理逻辑，比如阻止表单提交等
+                return;
+            }
+            const room_id = checkUUID();
+            checkSocket();
+            socket.emit('process_voice_video', { face_filename: filename, voice_filename: voice_filename, roomId: room_id});
+            closeVoiceOverlay();
+        }
+
         function confirmInput() {
             const userInput = document.getElementById('modalTextarea').value;
             console.log("User input:", userInput);
@@ -975,6 +1064,14 @@
             document.getElementById('overlayInput').style.display = 'none';
         }
 
+        function showVoiceOverlay() {
+            document.getElementById('overVoiceInput').style.display = 'flex';
+        }
+
+        function closeVoiceOverlay() {
+            document.getElementById('overVoiceInput').style.display = 'none';
+        }
+
         // 获取并填充按钮
         function loadButtons() {
             fetch('/api/getkeys', { method: 'GET' })
@@ -1029,9 +1126,11 @@
                 <button class="small-button" onclick="viewImage()">查看历史</button>
                 <button class="small-button" onclick="showComOverlay()">积分兑换</button>
                 <button class="small-button" onclick="toggleRecording(this)">🎙️ 录音</button>
-
+                <button class="small-button" onclick="showVoiceOverlay()">克隆声音</button>
+                <button class="small-button" onclick="confirmVideo()">生成视频</button>
             </div>
             <input type="hidden" id="filename">
+            <input type="hidden" id="voice_filename">
             <div class="progress-container">
                 <p class="progress-description">这是[进度条]</p>
                 <div class="progress-bar" id="progressBar">0%</div>
@@ -1073,6 +1172,14 @@
             <textarea id="secKeyInput" placeholder="输入兑换码"></textarea>
             <button onclick="closeComOverlay()">取消</button>
             <button onclick="confirmSocre()">确定</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overVoiceInput">
+        <div class="overlay-content">
+            <textarea id="voiceInput" placeholder="输入想要生成的话"></textarea>
+            <button onclick="closeVoiceOverlay()">取消</button>
+            <button onclick="confirmVoice()">确定</button>
         </div>
     </div>
 <script>

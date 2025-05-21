@@ -61,4 +61,7 @@ echo "Webapp started."
 cd /nvme0n1-disk/ai_tools/SocAIty/face2face
 sh start.sh
 cd /nvme0n1-disk/voice/Spark-TTS
-sh start_tts_api.sh
+bash start_tts_api.sh
+
+cd /nvme0n1-disk/video/SadTalker
+bash start_sadtalker_api.sh

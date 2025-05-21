@@ -3,6 +3,7 @@ from telegram import InputMediaPhoto
 from ImageProcessorSDXCN import CustomInpaintPipeline as sdxlInpainting
 from BookYesCommon import GenContextParam, GenSavePathParam, process_req_data, get_rest_key, translate_baidu, read_json_file
 import numpy as np
+from typing import Optional
 import hashlib
 import traceback
 import subprocess
@@ -574,6 +575,64 @@ def req_process_video(pic_b='', pic_save=None, source_path_list=None, target_pat
         print(f"请求失败，状态码: {response.status_code}, 错误信息: {response.text}")
 
     return None
+
+
+def call_sadtalker_api(driven_audio: str, source_image: str, port: int = 5020) -> Optional[bytes]:
+    """
+    调用已在后端运行的 /process_sadtalker 接口，获取一个 ZIP 文件流。
+    从 ZIP 中找到 MP4 的内容，并返回 MP4 的二进制数据 (bytes)。
+
+    注意：此函数只返回内存中的 mp4_data，不做任何本地文件写入。
+    你可以在外部拿到 mp4_data 后自行保存文件或继续处理。
+    """
+    # FastAPI 服务地址
+    url = f"http://127.0.0.1:{port}/process_sadtalker"
+
+    # JSON 请求体（可根据自己的需求增减参数）
+    payload = {
+        "driven_audio": driven_audio,
+        "source_image": source_image,
+        "result_dir": "./resultst",
+        "preprocess": "full",
+        "enhancer": "gfpgan",
+        # 如果需要更多字段，例如 pose_style、batch_size 等，也可在这里继续加
+    }
+
+    try:
+        # 发送 POST 请求（stream=True 用于流式下载）
+        response = requests.post(url, json=payload, stream=True)
+        response.raise_for_status()  # 如果 HTTP 状态码不是 2xx，会抛出异常
+
+        # 把所有 ZIP 数据读到内存 zip_data
+        zip_data = b""
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                zip_data += chunk
+
+        # 在内存中解压 zip，找到 mp4 文件并读取其二进制
+        with zipfile.ZipFile(io.BytesIO(zip_data), "r") as zf:
+            mp4_filename = None
+            for filename in zf.namelist():
+                if filename.lower().endswith(".mp4"):
+                    mp4_filename = filename
+                    break
+
+            if not mp4_filename:
+                print("[WARN] ZIP 中没有发现 mp4 文件，可能生成失败？")
+                return None
+
+            with zf.open(mp4_filename, "r") as mp4_file:
+                mp4_data = mp4_file.read()
+
+        # 返回 MP4 文件的二进制数据（bytes）
+        return mp4_data
+
+    except requests.exceptions.RequestException as e:
+        print("[ERROR] 请求接口时出错:", str(e))
+        return None
+    finally:
+        free_text_gen(port)
+
 # 5000 1005
 def req_replace_face(pic_b='', pic_save=None, source_path_list=None, target_path_list=None, fast_free=True, port=0):
     try:
@@ -1040,6 +1099,8 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
 
     global sdxl_ac_in_cpu
     global sdxl_ac_in_gpu
+    global REMOVE_FROM_ME
+    REMOVE_FROM_ME = True
     processor = None
     try:
         if mask_future is not None:
@@ -1066,20 +1127,23 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
         logger.info('------------开始加载 vae unet ---------------')
         processor = sdxlInpainting(controlnet_list_t = re_p_float_array, use_out_test= (ga_b == 1.0))
         # processor = fluxInpainting(use_out_test=(ga_b == 1.0))
-        if sdxl_ac_in_cpu:
-            logger.info(f'--------------从 cpu加载模型到 gpu')
-            torch.cuda.empty_cache()
-            gc.collect()
-            sdxl_ac_in_gpu = processor.pipe.to('cuda')
-            logger.info(f'--------------完成 cpu加载模型到 gpu')
-            sdxl_ac_in_cpu_del = sdxl_ac_in_cpu
-            sdxl_ac_in_cpu = None
-            del sdxl_ac_in_cpu_del
-            torch.cuda.empty_cache()
-            gc.collect()
-            logger.info(f'--------------完成 释放 cpu空间-----------')
+        if not REMOVE_FROM_ME:
+            if sdxl_ac_in_cpu:
+                logger.info(f'--------------从 cpu加载模型到 gpu')
+                torch.cuda.empty_cache()
+                gc.collect()
+                sdxl_ac_in_gpu = processor.pipe.to('cuda')
+                logger.info(f'--------------完成 cpu加载模型到 gpu')
+                sdxl_ac_in_cpu_del = sdxl_ac_in_cpu
+                sdxl_ac_in_cpu = None
+                del sdxl_ac_in_cpu_del
+                torch.cuda.empty_cache()
+                gc.collect()
+                logger.info(f'--------------完成 释放 cpu空间-----------')
+            else:
+                sdxl_ac_in_gpu = processor.pipe
         else:
-            sdxl_ac_in_gpu = processor.pipe
+            logger.info('------------单次执行后 直接销毁 ---------------')
         notify_fuc(notify_type, 'processing_step_progress', {'text': 'book yes 计算中 共4张图可出稍等哈...'}, to=room_id)
 
         control_image = get_from_local(control_image_return, gen_save_path.control_net_fname_path)
@@ -1158,19 +1222,24 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
         logger.info(f"processing error is  -------: {e}")
         notify_fuc(notify_type, 'processing_step_progress', {'text': 'book yes 异常了请重新上传执行...'}, to=room_id)
     finally:
-        logger.info(f'--------------推理完成开始 释放 gpu空间-----------')
+        logger.info(f'--------------Inference completed, clearing GPU memory-----------')
         torch.cuda.empty_cache()
         gc.collect()
-        logger.info(f'--------------释放 gpu空间 完成 开始移动 模型到 cpu-----------')
-        sdxl_ac_in_cpu = processor.pipe.to("cpu")
-        logger.info(f'--------------完成移动 模型到 cpu---开始释放GPU资源----------')
-        sdxl_ac_in_gpu_del = sdxl_ac_in_gpu
-        sdxl_ac_in_gpu = None
-        del sdxl_ac_in_gpu_del
-        torch.cuda.empty_cache()
-        gc.collect()
-        logger.info(f'--------------完成移动 模型到 cpu---完成释放GPU资源----------')
-
+        if not REMOVE_FROM_ME:
+            logger.info(f'--------------GPU memory cleared, moving model to CPU-----------')
+            sdxl_ac_in_cpu = processor.pipe.to("cpu")
+            logger.info(f'--------------Model moved to CPU, releasing GPU resources----------')
+            sdxl_ac_in_gpu_del = sdxl_ac_in_gpu
+            sdxl_ac_in_gpu = None
+            del sdxl_ac_in_gpu_del
+            torch.cuda.empty_cache()
+            gc.collect()
+            logger.info(f'--------------Model moved to CPU, GPU resources released----------')
+        else:
+            logger.info('------------Single-run execution, destroying pipeline and cleaning up---------------')
+            processor.release_resources()
+            del processor.pipe
+            del processor
         # 释放 GPU 内存
         if 'prompt_embeds' in locals():
             del prompt_embeds
@@ -1183,6 +1252,27 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
         del big_mask
         torch.cuda.empty_cache()
         gc.collect()
+        list_cuda_tensors()
+        logger.info('------------完成显存释放---------------')
+
+def list_cuda_tensors():
+    found = []
+    for obj in gc.get_objects():
+        try:
+            # 直接是张量
+            if torch.is_tensor(obj) and obj.is_cuda:
+                found.append((type(obj), tuple(obj.shape), obj.element_size()*obj.nelement()))
+            # torch.nn.Module 或其它 Container
+            elif hasattr(obj, 'data') and torch.is_tensor(obj.data) and obj.data.is_cuda:
+                t = obj.data
+                found.append((type(obj), tuple(t.shape), t.element_size()*t.nelement()))
+        except Exception:
+            pass
+    # 排序：占用大到小
+    found.sort(key=lambda x: x[2], reverse=True)
+    for cls, shape, byte_size in found:
+        logger.info(f"{cls.__name__:30s} | shape={shape:20s} | {byte_size/1024**2:6.2f} MB")
+    logger.info(f"总共找到 {len(found)} 个活跃的 CUDA 对象")
 
 def get_prompt_map():
     return read_json_file()
@@ -1268,12 +1358,42 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
         file_txt_name = f'p_voi_{unique_key}.wav'
         file_txt_name_path = os.path.join(app_path, room_id, file_txt_name)
         logger.info(f"voice saved to {file_txt_name_path}")
-        with open("file_txt_name_path", "wb") as f:
+        with open(file_txt_name_path, "wb") as f:
             f.write(voice_file)
         room_image_manager.insert_imgStr(room_id, f'{file_txt_name}', 'audio', '生成视频', file_p=file_txt_name_path, notify_fuc=notify_fuc,
                                          notify_type=notify_type)
         notify_fuc(notify_type, 'processing_step_progress',
                    {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id, keyList=get_rest_key())
+        return
+    if def_skin == 'voice_video_gen':
+        face_filename = data['face_filename']
+        voice_filename = data['voice_filename']
+
+        unique_key = generate_unique_key(room_id, face_filename, voice_filename)
+
+        face_filename_path = os.path.join(app_path, room_id, face_filename)
+        voice_filename_path = os.path.join(app_path, room_id, voice_filename)
+
+        logger.info(f"unique_key: {unique_key}")
+        logger.info(f'chose voice is {face_filename_path} file_path {voice_filename_path}')
+
+        mp4_data = call_sadtalker_api(voice_filename_path, face_filename_path, port=5720)
+        if mp4_data:
+            # 生成一个带时间戳的文件名
+            file_video_name = f'p_vo_{unique_key}.mp4'
+            file_video_name_path = os.path.join(app_path, room_id, file_video_name)
+            logger.info(f"video saved to {file_video_name_path}")
+            with open(file_video_name_path, "wb") as f:
+                f.write(mp4_data)
+
+            room_image_manager.insert_imgStr(room_id, f'{file_video_name}', 'video', '生成视频', file_p=file_video_name_path, notify_fuc=notify_fuc,
+                                             notify_type=notify_type)
+            notify_fuc(notify_type, 'processing_step_progress',
+                       {'text': '已完成，可以继续上传需要替换的内容，或者切换模型使用其他功能'}, to=room_id, keyList=get_rest_key())
+        else:
+            notify_fuc(notify_type, 'processing_step_progress',
+                       {'text': '生成异常'}, to=room_id,
+                       keyList=get_rest_key())
         return
     # filename
     if def_skin == 'face':

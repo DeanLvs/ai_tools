@@ -48,6 +48,8 @@ class CustomInpaintPipeline:
         if not hasattr(self, "_initialized"):
             self.cache = {}  # 内存缓存字典
             self._initialized = True
+            # —— 新增：加载状态标志
+            self.is_loaded = False
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.model_path = model_path
             self.controlnet_list = controlnet_list_t #,'depth','canny','key_points','depth',,'seg'
@@ -100,18 +102,61 @@ class CustomInpaintPipeline:
             # self.load_lora_weights(lora_path="/nvme0n1-disk/civitai-downloader/lora/biggunsxl_v11.safetensors", lora_scale=0.5, adapter_name="bigsxiiiixxl")
             # self.load_lora_weights(lora_path="/nvme0n1-disk/civitai-downloader/lora/SDXL_DatAss_v1.safetensors", lora_scale=0.7, adapter_name="datass")
             # self.load_lora_weights(lora_path="/nvme0n1-disk/civitai-downloader/lora/Realistic_Pussy_Xl-000010.safetensors", lora_scale=0.8, adapter_name="pppussy")
-            self.load_lora_weights_base(lora_path="/nvme0n1-disk/civitai-downloader/lora/NudeXL.safetensors", lora_scale=0.6, adapter_name="binu")
+            self.load_lora_weights_base(lora_path="/nvme0n1-disk/civitai-downloader/lora/nudify_xl_lite.safetensors", lora_scale=0.6, adapter_name="binu")
         logger.info('suc lora')
 
     def release_resources(self):
-        # 清理占用的资源
-        if self.pipe is not None:
-            del self.pipe
-            self.pipe = None
-        torch.cuda.empty_cache()  # 释放GPU内存
-        logger.info('Resources released')
+        """
+        彻底释放所有模型和缓存，并重置加载状态。
+        """
+        if getattr(self, "is_loaded", False):
+            # —— 1. 先把整个 pipeline 和子模块都搬回 CPU
+            try:
+                self.pipe.to("cpu")
+                logger.info("Pipeline moved to CPU.")
+            except Exception as e:
+                logger.warning(f"Moving pipeline to CPU failed: {e}")
 
-        # 将单例重置为None
+            # —— 2. 如果有 LoRA 层，先卸载
+            try:
+                self.pipe.unload_lora_weights()
+                logger.info("Unloaded LoRA weights.")
+            except Exception as e:
+                logger.warning(f"Unloading LoRA failed: {e}")
+
+            # —— 3. 删除 pipeline 内部所有可能的子模块引用
+            for sub_attr in ["unet", "vae", "controlnet", "scheduler", "text_encoder", "text_encoder_2"]:
+                if hasattr(self.pipe, sub_attr):
+                    try:
+                        delattr(self.pipe, sub_attr)
+                        logger.info(f"Deleted pipe.{sub_attr}")
+                    except Exception:
+                        pass
+
+            # —— 4. 删除整个 pipeline 引用
+            try:
+                del self.pipe
+            except Exception:
+                pass
+
+            # —— 5. 再把 tokenizer、encoder 等引用也删掉
+            for attr in ["text_encoder", "text_encoder_2", "tokenizer", "tokenizer_2"]:
+                if hasattr(self, attr):
+                    try:
+                        delattr(self, attr)
+                    except Exception:
+                        pass
+
+            # —— 6. 强制回收
+            torch.cuda.empty_cache()
+            # PyTorch 2.1+ 可选：torch.cuda.ipc_collect()
+            gc.collect()
+
+            # —— 7. 标记已释放
+            self.is_loaded = False
+            logger.info("CustomInpaintPipeline: resources released, is_loaded=False")
+
+        # 最后重置单例
         CustomInpaintPipeline._instance = None
 
     def __del__(self):

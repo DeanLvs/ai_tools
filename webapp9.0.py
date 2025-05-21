@@ -394,6 +394,7 @@ def add_image_processing_inp_task(data):
     logger.info(f'get req is {data}')
     data['def_skin'] = 'inpaint'
     data['prompt'] = 'nude,person,woman,the front of body,authenticity,natural asses,natural boobs'
+    # data['prompt'] = 'person,woman,the front of body,authenticity,wearing a bikini swimsuit'
     data[
         'reverse_prompt'] = 'finger,wrist,hazy,malformed,warped,hand,multiple belly buttons,multiple breasts,multiple nipples,deformed limbs,disconnected limbs,contorted position,elongated waists,overly exaggerated body parts,body incorrect proportions'
     data['num_inference_steps'] = '30'
@@ -452,12 +453,24 @@ def process_pic_swap_face(data):
     user_info = query_or_def(User(roomId, roomId))
     add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
 
-@socketio.on('process_pic_swap_face')
+@socketio.on('process_voice_clone')
 def process_pic_swap_face(data):
     roomId = data['roomId']
     filename = data['filename']
     data['notify_type'] = 'ws'
     data['def_skin'] = 'voice_gen'
+    logger.info(f'get req is {data}')
+    room_image_manager = RoomImageManager()
+    user_info = query_or_def(User(roomId, roomId))
+    add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
+
+@socketio.on('process_voice_video')
+def process_pic_swap_face(data):
+    roomId = data['roomId']
+    face_filename = data['face_filename']
+    voice_filename = data['voice_filename']
+    data['notify_type'] = 'ws'
+    data['def_skin'] = 'voice_video_gen'
     logger.info(f'get req is {data}')
     room_image_manager = RoomImageManager()
     user_info = query_or_def(User(roomId, roomId))

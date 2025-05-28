@@ -3,8 +3,8 @@ import oss2
 import os
 
 # 使用环境变量获取认证信息
-os.environ['OSS_ACCESS_KEY_ID'] = 'LTAI5tLQFvEjUY4RVCPFpM5T'
-os.environ['OSS_ACCESS_KEY_SECRET'] = 'CmkBRQlyjlTpP9FobqmIn1XOLTFhkB'
+os.environ['OSS_ACCESS_KEY_ID'] = 'xxxxx'
+os.environ['OSS_ACCESS_KEY_SECRET'] = 'xxxxxx'
 
 from oss2.credentials import EnvironmentVariableCredentialsProvider
 auth = oss2.ProviderAuth(EnvironmentVariableCredentialsProvider())

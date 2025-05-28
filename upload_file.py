@@ -2,8 +2,8 @@
 import oss2
 import os
 
-os.environ['OSS_ACCESS_KEY_ID'] = 'LTAI5tLQFvEjUY4RVCPFpM5T'
-os.environ['OSS_ACCESS_KEY_SECRET'] = 'CmkBRQlyjlTpP9FobqmIn1XOLTFhkB'
+os.environ['OSS_ACCESS_KEY_ID'] = 'xxxx'
+os.environ['OSS_ACCESS_KEY_SECRET'] = 'xxxxx'
 from oss2.credentials import EnvironmentVariableCredentialsProvider
 auth = oss2.ProviderAuth(EnvironmentVariableCredentialsProvider())
 bucket = oss2.Bucket(auth, 'https://oss-us-east-1.aliyuncs.com', 'gpusys')

@@ -17,6 +17,11 @@ import concurrent.futures
 import requests, io
 import pickle
 import zipfile
+import subprocess
+import shutil
+import glob
+from PIL import Image
+import cv2
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 # process_a.py
 from book_yes_logger_config import logger
@@ -1002,6 +1007,12 @@ def run_gen_it(processor, g_c_param: GenContextParam, notify_type, notify_fuc, a
     notify_fuc(notify_type, 'processing_step_fin', {'fin': 'f'}, to=g_c_param.room_id)
     del result_next
 
+def run_gen_viode_it(processor, g_c_param: GenContextParam, save_path):
+    result_next,gen_it_prompt = processor.genIt(g_c_param)
+    result_next = result_next.resize((g_c_param.original_width, g_c_param.original_height), Image.LANCZOS)
+    result_next.save(save_path)
+    del result_next
+
 def room_path(room_id, app_path):
     return os.path.join(app_path, room_id)
 
@@ -1255,6 +1266,186 @@ def handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_
         list_cuda_tensors()
         logger.info('------------完成显存释放---------------')
 
+def handle_video_inpaint(data, notify_fuc, app_path, room_image_manager, create_callback):
+    # 处理并提取图片数据
+    processed_data = process_req_data(data)
+    notify_type = processed_data['notify_type']
+    room_id = processed_data['roomId']
+    # 从处理后的数据中提取值
+    def_skin = processed_data['def_skin']
+    filename = processed_data['filename']
+    prompt = processed_data['prompt']
+    prompt_2 = processed_data['prompt_2']
+    re_p_float_array = processed_data['re_p_float_array']
+    re_b_float_array = processed_data['re_b_float_array']
+    ha_p = processed_data['ha_p']
+    ga_b = processed_data['ga_b']
+    reverse_prompt = processed_data['reverse_prompt']
+    reverse_prompt_2 = processed_data['reverse_prompt_2']
+    strength = processed_data['strength']
+    num_inference_steps = processed_data['num_inference_steps']
+    guidance_scale = processed_data['guidance_scale']
+    seed = processed_data['seed']
+    file_path = os.path.join(app_path, room_id, filename)
+    # Generate a unique key for the input combination
+    unique_key = generate_unique_key(room_id, filename, prompt, reverse_prompt, num_inference_steps, guidance_scale, seed, re_p_float_array, re_b_float_array, ha_p, ga_b, strength,prompt_2, reverse_prompt_2)
+    logger.info(f"unique_key: {unique_key}")
+    mask_future = None
+    gen_fix_pic_future = None
+    fill_all_mask_future = None
+    filled_image_pil_return = None
+    next_filled_image_pil_return = None
+    clear_image_pil_return = None
+    mask_clear_finally = None
+    segmentation_image_pil = None
+    control_image_return = None
+    normal_map_img_return = None
+    normal_3d_map_img_return = None
+    with_torso_mask = None
+    line_image_l_control = None
+    fill_all_mask_img = None
+    gen_save_path = GenSavePathParam(app_path, room_id, filename)
+    if seed > -2:
+        torch.manual_seed(seed)
+    f_output_line_image_pil = None
+    logger.info(f"filled_image_pil_filename: {gen_save_path.filled_image_pil_filename} ")
+    notify_fuc(notify_type, 'processing_step_progress', {'text': 'book yes 识别图片...'},to=room_id)
+    room_upload_folder = room_path(room_id, app_path)
+    mask_future, gen_fix_pic_future, fill_all_mask_future = re_auto_mask_with_out_head_b(room_upload_folder, filename, True)
+
+    global sdxl_ac_in_cpu
+    global sdxl_ac_in_gpu
+    global REMOVE_FROM_ME
+    REMOVE_FROM_ME = False
+
+    # 视频相关准备
+    video_frames_dir = os.path.join(app_path, room_id, 'video_frames_' + unique_key)
+    audio_path = os.path.join(app_path, room_id, f'{unique_key}_audio.aac')
+    os.makedirs(video_frames_dir, exist_ok=True)
+
+    # 提取每帧图片
+    subprocess.run([
+        'ffmpeg', '-i', file_path,
+        os.path.join(video_frames_dir, 'frame_%05d.png')
+    ])
+
+    # 提取音频
+    subprocess.run([
+        'ffmpeg', '-i', file_path, '-vn', '-acodec', 'copy', audio_path
+    ])
+
+    frame_files = sorted(glob.glob(os.path.join(video_frames_dir, 'frame_*.png')))
+    output_frame_dir = os.path.join(app_path, room_id, 'output_frames_' + unique_key)
+    os.makedirs(output_frame_dir, exist_ok=True)
+    for i, frame_file in enumerate(frame_files):
+        try:
+            processor = None
+            image_org = Image.open(frame_file).convert("RGB")
+            original_width, original_height = image_org.size
+            orgImage = image_org
+            if mask_future is not None:
+                mask_clear_finally, temp_humanMask, control_image_return, normal_map_img_return, normal_3d_map_img_return, with_torso_mask, f_output_line_image_pil, segmentation_image_pil = mask_future.result()
+            # processor =FluxInpaintPipelineSingleton ()
+            logger.info('------------开始加载 vae unet ---------------')
+            processor = sdxlInpainting(controlnet_list_t = re_p_float_array, use_out_test= (ga_b == 1.0))
+            # processor = fluxInpainting(use_out_test=(ga_b == 1.0))
+            if not REMOVE_FROM_ME:
+                if sdxl_ac_in_cpu:
+                    logger.info(f'--------------从 cpu加载模型到 gpu')
+                    torch.cuda.empty_cache()
+                    gc.collect()
+                    sdxl_ac_in_gpu = processor.pipe.to('cuda')
+                    logger.info(f'--------------完成 cpu加载模型到 gpu')
+                    sdxl_ac_in_cpu_del = sdxl_ac_in_cpu
+                    sdxl_ac_in_cpu = None
+                    del sdxl_ac_in_cpu_del
+                    torch.cuda.empty_cache()
+                    gc.collect()
+                    logger.info(f'--------------完成 释放 cpu空间-----------')
+                else:
+                    sdxl_ac_in_gpu = processor.pipe
+            else:
+                logger.info('------------单次执行后 直接销毁 ---------------')
+            notify_fuc(notify_type, 'processing_step_progress', {'text': 'book yes 计算中 共4张图可出稍等哈...'}, to=room_id)
+
+            control_image = control_image_return
+            with_torso_mask_img = with_torso_mask
+            auto_line_con = f_output_line_image_pil
+            prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds = None,None,None,None
+            # 不会执行
+            if fill_all_mask_future is not None:
+                fill_all_mask_img = fill_all_mask_future.result()
+            elif os.path.exists(gen_save_path.fill_all_mask_img_name_path):
+                fill_all_mask_img = Image.open(gen_save_path.filled_image_pil_path)
+            big_mask = mask_clear_finally
+            normal_map_img = normal_map_img_return
+            normal_map_3d_img = normal_3d_map_img_return
+            g_c_param = GenContextParam(prompt, prompt_2, reverse_prompt, reverse_prompt_2, orgImage, with_torso_mask_img,
+                       num_inference_steps, guidance_scale,
+                       create_callback('1/4', room_id, num_inference_steps, notify_type), strength,
+                       [control_image, normal_map_img, segmentation_image_pil, line_image_l_control], re_b_float_array,
+                       prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds,
+                       original_width, original_height, '', room_id)
+            # if fill_all_mask_img 可以执行 g_c_param.next_genImage = fill_all_mask_img g_c_param.save_filename = fill_all_processed_org_r_filename
+            if gen_fix_pic_future is not None:
+                clear_image_pil_return, filled_image_pil_return, next_filled_image_pil_return = gen_fix_pic_future.result()
+            clear_org_i = clear_image_pil_return
+            genImage = filled_image_pil_return
+            if isinstance(genImage, Image.Image) and genImage is not None:
+                g_c_param.func_call_back, g_c_param.next_genImage, g_c_param.save_filename = create_callback('3/4', room_id, num_inference_steps, notify_type), genImage,  f'p_3_{unique_key}.png'
+                g_c_param.book_img_name = '填充纹理'
+                run_gen_viode_it(processor, g_c_param, os.path.join(output_frame_dir, f'frame_{i:05d}.png'))
+
+        except Exception as e:
+            logger.info(f"processing error is  -------: {e}")
+        finally:
+            logger.info(f'--------------Inference completed, clearing GPU memory-----------')
+            torch.cuda.empty_cache()
+            gc.collect()
+            if not REMOVE_FROM_ME:
+                logger.info(f'--------------GPU memory cleared, moving model to CPU-----------')
+                sdxl_ac_in_cpu = processor.pipe.to("cpu")
+                logger.info(f'--------------Model moved to CPU, releasing GPU resources----------')
+                sdxl_ac_in_gpu_del = sdxl_ac_in_gpu
+                sdxl_ac_in_gpu = None
+                del sdxl_ac_in_gpu_del
+                torch.cuda.empty_cache()
+                gc.collect()
+                logger.info(f'--------------Model moved to CPU, GPU resources released----------')
+            else:
+                logger.info('------------Single-run execution, destroying pipeline and cleaning up---------------')
+                processor.release_resources()
+                del processor.pipe
+                del processor
+            # 释放 GPU 内存
+            if 'prompt_embeds' in locals():
+                del prompt_embeds
+            if 'negative_prompt_embeds' in locals():
+                del negative_prompt_embeds
+            if 'pooled_prompt_embeds' in locals():
+                del pooled_prompt_embeds
+            if 'negative_pooled_prompt_embeds' in locals():
+                del negative_pooled_prompt_embeds
+            del big_mask
+            torch.cuda.empty_cache()
+            gc.collect()
+            list_cuda_tensors()
+            logger.info('------------完成显存释放---------------')
+    output_video_path = os.path.join(app_path, room_id, f'{unique_key}_output.mp4')
+
+    subprocess.run([
+        'ffmpeg', '-framerate', '25',  # 可调帧率
+        '-i', os.path.join(output_frame_dir, 'frame_%05d.png'),
+        '-i', audio_path,
+        '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+        '-c:a', 'aac',
+        '-shortest',  # 防止音频长于视频
+        output_video_path
+    ])
+
+    room_image_manager.insert_imgStr(room_id, f'{output_video_path}', 'video', '生成视频', file_p=output_video_path,
+                                     notify_fuc=notify_fuc,
+                                     notify_type=notify_type)
 def list_cuda_tensors():
     found = []
     for obj in gc.get_objects():
@@ -1506,6 +1697,8 @@ def handle_image_processing_b(data, notify_fuc, app_path, room_image_manager, cr
     if def_skin == 'inpaint':
         # 重绘任务
         handle_image_inpaint(data, notify_fuc, app_path, room_image_manager, create_callback)
+    if def_skin == 'video_inpaint':
+        handle_video_inpaint(data, notify_fuc, app_path, room_image_manager, create_callback)
     return
 
 

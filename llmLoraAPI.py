@@ -30,6 +30,8 @@ PLACE_C = "<CHAR>"
 # LORA_DIR = "/nvme0n1-disk/llm/axolotl/models/lora/Yi-6B-Chat-spicy-lora"
 LORA_DIR = "/nvme0n1-disk/ai_tools/output_qlora_maxxx_yi9b/checkpoint-20000"
 MODEL_DIR = Path("/nvme0n1-disk/llm/axolotl/models/Yi-9B")
+# MODEL_DIR = Path("/nvme0n1-disk/llm/axolotl/models/Qwen2.5-Sex")
+LOAD_LORA = True
 # MODEL_DIR = Path("/nvme0n1-disk/llm/axolotl/models/mistral-7b-zh")
 
 # MODEL_DIR = Path("/nvme0n1-disk/llm/axolotl/models/Josiefied-Qwen3-8B")
@@ -95,13 +97,18 @@ def load_model():
     )
     base_model.resize_token_embeddings(len(tok))
     # 2) 加载去拦截的 spicy LoRA
-    # model = PeftModel.from_pretrained(base_model, LORA_DIR, local_files_only=True)
-    model = PeftModel.from_pretrained(
-        base_model,
-        LORA_DIR,
-        torch_dtype=torch.float16,
-        device_map="auto"
-    )
+    if LOAD_LORA:
+        model = PeftModel.from_pretrained(base_model, LORA_DIR, local_files_only=True)
+    else:
+        model = base_model
+    # model = PeftModel.from_pretrained(
+    #     base_model,
+    #     LORA_DIR,
+    #     torch_dtype=torch.float16,
+    #     device_map="auto"
+    # )
+
+    # model = base_model
 
     gen = TextGenerationPipeline(
         model=model,
@@ -231,6 +238,13 @@ def trim_messages_no_chat(msgs: List[str]) -> List[str]:
             msgs[0] = tok.decode(cut, skip_special_tokens=True)
             return msgs
 class Req(BaseModel):
+    max_new_tokens: int = Field(RESERVE_FOR_GEN, description="场景"),
+    min_new_tokens: int = Field(MIN_FOR_GEN, description="场景"),
+    temperature: float = Field(0.9, description="场景"),
+    top_p: float = Field(0.9, description="场景"),
+    top_k: int = Field(40, description="场景"),
+    repetition_penalty: float = Field(1.1, description="场景"),
+    no_repeat_ngram_size:int = Field(2, description="场景"),
     char_id: str
     user_id: str
     char_time: str = Field("这天晚上放学后，学生都离开了", description="场景")
@@ -332,18 +346,19 @@ def chat_no_chat(r: Req):
         logger.info(f"had receive r \n{r}")
         prompt = build_prompt_no_chat_v(r)
         logger.info(f"[Prompt 输入文本] >>>\n{prompt}\n<<<")
+        logger.info(f"config max_new_tokens {r.max_new_tokens} min_new_tokens {r.min_new_tokens} temperature {r.temperature} top_p {r.top_p} top_k {r.top_k} repetition_penalty {r.repetition_penalty} no_repeat_ngram_size {r.no_repeat_ngram_size}")
         out = gen(
             prompt,
-            max_new_tokens=RESERVE_FOR_GEN,
-            min_new_tokens=MIN_FOR_GEN,
+            max_new_tokens=r.max_new_tokens,
+            min_new_tokens=r.min_new_tokens,
             do_sample=True,
             early_stopping=True,
-            temperature=0.9,
-            top_p=0.9,
-            top_k=40,
-            repetition_penalty=1.1,
-            no_repeat_ngram_size=2,
-            stopping_criteria=STOP_LIST
+            temperature=r.temperature,
+            top_p=r.top_p,
+            top_k=r.top_k,
+            repetition_penalty=r.repetition_penalty,
+            no_repeat_ngram_size=r.no_repeat_ngram_size,
+            # stopping_criteria=STOP_LIST
             # stop=[f"\n{PLACE_U}：", f"\n{PLACE_C}："]
         )[0]["generated_text"]
     except Exception as e:

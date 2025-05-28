@@ -804,6 +804,23 @@
             socket.emit('process_image_inpaint', { filename, roomId: room_id });
         }
 
+        function processVideo_inpaint_b() {
+            const filename = document.getElementById('filename').value;
+            if (!filename || filename.trim() === '') {
+                alert('先选择一个要处理的视频吧');
+                // 这里可以添加其他处理逻辑，比如阻止表单提交等
+                return;
+            }
+            if(!isVideoFile(filename)){
+                alert('先选择一个要处理的视频吧');
+                return;
+            }
+            showOverlay();
+            const room_id = checkUUID();
+            checkSocket();
+            socket.emit('process_video_inpaint', { filename, roomId: room_id });
+        }
+
         function check_face_b() {
             const filename = document.getElementById('filename').value;
             if (!filename || filename.trim() === '') {
@@ -1127,7 +1144,8 @@
                 <button class="small-button" onclick="showComOverlay()">积分兑换</button>
                 <button class="small-button" onclick="toggleRecording(this)">🎙️ 录音</button>
                 <button class="small-button" onclick="showVoiceOverlay()">克隆声音</button>
-                <button class="small-button" onclick="confirmVideo()">生成视频</button>
+                <button class="small-button" onclick="confirmVideo()">声音+图片生成视频</button>
+                <button class="small-button" onclick="processVideo_inpaint_b()">视频换装</button>
             </div>
             <input type="hidden" id="filename">
             <input type="hidden" id="voice_filename">

@@ -412,6 +412,30 @@ def add_image_processing_inp_task(data):
     user_info = query_or_def(User(roomId, roomId))
     add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
 
+@socketio.on('process_video_inpaint')
+def add_video_processing_inp_task(data):
+    data['notify_type'] = 'ws'
+    roomId = data['roomId']
+    logger.info(f'get req is {data}')
+    data['def_skin'] = 'video_inpaint'
+    data['prompt'] = 'nude,person,woman,the front of body,authenticity,natural asses,natural boobs'
+    # data['prompt'] = 'person,woman,the front of body,authenticity,wearing a bikini swimsuit'
+    data[
+        'reverse_prompt'] = 'finger,wrist,hazy,malformed,warped,hand,multiple belly buttons,multiple breasts,multiple nipples,deformed limbs,disconnected limbs,contorted position,elongated waists,overly exaggerated body parts,body incorrect proportions'
+    data['num_inference_steps'] = '30'
+    data['guidance_scale'] = '7'
+    data['seed'] = '128'
+    data['strength'] = '0.8543'
+    data['ha_p'] = '0'
+    data['ga_b'] = '0.09'
+    data['re_p'] = "['key_points','depth','canny']"
+    data['re_b'] = "[0.5, 0.2, 0.5, 0.5]"
+    data['filename'] = data['filename']
+    data['roomId'] = roomId
+    logger.info(f'get req is {data}')
+    room_image_manager = RoomImageManager()
+    user_info = query_or_def(User(roomId, roomId))
+    add_task_list(data, 'ws_notify_it', glob_task_queue, glob_task_positions, notify_fuc=notify_it, room_image_manager=room_image_manager, user_info=user_info)
 
 @socketio.on('process_text_gen_pic')
 def process_text_gen_pic(data):

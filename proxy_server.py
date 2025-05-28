@@ -57,10 +57,15 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     model: Optional[str] = None
     stream: Optional[bool] = None
-    temperature: Optional[float] = None
-    top_p: Optional[float] = None
+    temperature: Optional[float] = 0.9
+    top_p: Optional[float] = 0.9
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
+    max_new_tokens: Optional[int] = 128
+    min_new_tokens: Optional[int] = 64
+    top_k:  Optional[int] = 40
+    repetition_penalty: Optional[float] = 1.1
+    no_repeat_ngram_size:  Optional[int] = 2
 
     messages: List[Message] = Field(default_factory=list)
 
@@ -207,6 +212,13 @@ async def completions(request: Request, chat_req: ChatRequest):
         "history_turns": 0,
         # messages 部分，你可以按需处理；这里直接传整个列表
         "history_external": [m.dict() for m in filtered_messages],
+        "max_new_tokens": chat_req.max_new_tokens,
+        "min_new_tokens": chat_req.min_new_tokens,
+        "temperature": chat_req.temperature,
+        "top_p": chat_req.top_p,
+        "top_k": chat_req.top_k,
+        "repetition_penalty": chat_req.repetition_penalty,
+        "no_repeat_ngram_size": chat_req.no_repeat_ngram_size,
     }
 
 
@@ -216,6 +228,7 @@ async def completions(request: Request, chat_req: ChatRequest):
             resp = await client.post(LLM_JSON_URL, json=llm_payload)
             resp.raise_for_status()
         reply = resp.json()["answer"]
+        asyncio.create_task(httpx.AsyncClient().get(LLM_RE_URL))
         # reply = "mock数据"
         # （如需 TTS/SadTalker，可在此同步调用，再拼 reply）
         return {

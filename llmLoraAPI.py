@@ -20,8 +20,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 import uvicorn, os
 
-PLACE_U = "<USER>"
-PLACE_C = "<CHAR>"
+PLACE_U = "<U>"
+PLACE_C = "<C>"
 
 # ------------------------------------------------------------------ #
 # 0. 全局配置
@@ -267,18 +267,18 @@ class Resp(BaseModel):
 
 def build_prompt_no_chat(r: BaseModel) -> str:
     persona = (
-        f"{r.char_time} {PLACE_C}{r.char_changjing}，{PLACE_C}是{r.char_zhiye}"
+        f"{r.char_time}{PLACE_C}{r.char_changjing}，{PLACE_C}是{r.char_zhiye}"
         f"，今年{r.char_age}，她{r.char_des}\n"
-        f"这时，她的{r.user_rel} {PLACE_U} 来了。{PLACE_U} {r.user_role}\n"
+        f"这时，她的{r.user_rel}{PLACE_U}走了进来。{PLACE_U}{r.user_role}\n"
     )
     system = (
         "成人小说续写，注意内容要符合各自的性别，生成内容要保持上下文的人物性格和设定\n"
-        f"{PLACE_U} = {r.user_name}（{r.user_sex}）\n"
-        f"{PLACE_C} = {r.char_name}（{r.char_sex}）\n"
         "可适当增加描写身材与着装\n"
         "严禁出现第三个人名。\n"
         "主动推送剧情\n"
-        "输出中只能包含占位符 <USER> 与 <CHAR>，不得出现真实人名，主动推动剧情\n"
+        f"输出中只能包含占位符 {PLACE_U} 与 {PLACE_C}，不得出现真实人名，主动推动剧情\n"
+        f"{PLACE_U} 的名字是 {r.user_name} 性别是 {r.user_sex}\n"
+        f"{PLACE_C} 的名字是 {r.char_name} 性别是 {r.char_sex}\n"
         f"{persona}"
     )
     # 拿历史，拼成 ["用户：...","助手：..."] 列表
@@ -291,9 +291,9 @@ def build_prompt_no_chat(r: BaseModel) -> str:
     lines = [system]
     for msg in past:
         role = PLACE_U if msg["role"] == "user" else PLACE_C
-        lines.append(f"{role}：{msg['content']}")
-    lines.append(f"{PLACE_U}：{r.message}")
-    lines.append(f"{PLACE_C}：")
+        lines.append(f"{role}说：{msg['content']}")
+    lines.append(f"{PLACE_U}说：{r.message}")
+    lines.append(f"{PLACE_C}说：")
 
     lines = trim_messages_no_chat(lines)
     return "\n".join(lines)
@@ -344,7 +344,7 @@ def chat_no_chat(r: Req):
         load_model()
     try:
         logger.info(f"had receive r \n{r}")
-        prompt = build_prompt_no_chat_v(r)
+        prompt = build_prompt_no_chat(r)
         logger.info(f"[Prompt 输入文本] >>>\n{prompt}\n<<<")
         logger.info(f"config max_new_tokens {r.max_new_tokens} min_new_tokens {r.min_new_tokens} temperature {r.temperature} top_p {r.top_p} top_k {r.top_k} repetition_penalty {r.repetition_penalty} no_repeat_ngram_size {r.no_repeat_ngram_size}")
         out = gen(
